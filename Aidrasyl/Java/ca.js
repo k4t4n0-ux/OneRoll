@@ -3,7 +3,7 @@ document.addEventListener("DOMContentLoaded", function() {
     const caInput = document.getElementById("ca");
     const escudo = document.getElementById("escudo");
 
-    let cargando = true; // 🔥 flag clave
+    let cargando = true;
 
     function clampCA() {
         let valor = parseInt(caInput.value);
@@ -13,7 +13,7 @@ document.addEventListener("DOMContentLoaded", function() {
 
     function actualizarEscudo() {
 
-        if (cargando) return; // 🔥 evita bug al cargar
+        if (cargando) return;
 
         clampCA();
 
@@ -28,7 +28,7 @@ document.addEventListener("DOMContentLoaded", function() {
     escudo.addEventListener("change", actualizarEscudo);
     caInput.addEventListener("input", clampCA);
 
-    // 🔥 cuando ya todo ha cargado
+
     setTimeout(() => {
         cargando = false;
     }, 0);
