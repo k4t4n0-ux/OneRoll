@@ -1,0 +1,489 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Inventario</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+body{background:#f3f6fb;color:#2c3440;padding:24px}
+.hoja{max-width:900px;margin:auto;width:100%}
+h1{text-align:center;margin:6px 0 22px;font-size:26px;font-weight:600;letter-spacing:1px;color:#3a4a5f}
+h3{font-size:15px;font-weight:600;color:#3a4a5f;margin:4px 0 10px}
+.volver{display:inline-block;font-size:13px;font-weight:600;color:#5b6572;text-decoration:none;padding:6px 12px;border:1px solid #cbd8ea;border-radius:8px;background:#e4edf7}
+.volver:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
+[hidden]{display:none!important}
+.panel{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.04);margin-bottom:18px}
+
+input[type=text],input[type=number],select{width:100%;height:32px;padding:0 8px;border-radius:8px;border:1px solid #d6dfeb;font-size:13px;background:#fff;transition:border .2s}
+input:focus,select:focus{outline:none;border-color:#7a9cc6;box-shadow:0 0 0 2px rgba(122,156,198,.15)}
+input[type=checkbox]{width:15px;height:15px;accent-color:#7a9cc6;cursor:pointer}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5b6572;margin-bottom:4px}
+label.check{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:#2c3440;cursor:pointer;margin:0}
+button{height:32px;padding:0 12px;border-radius:8px;border:1px solid #cbd8ea;background:#e4edf7;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s}
+button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
+.del{background:#ffe5e5;border-color:#ffb5b5;color:#a30000;width:34px;padding:0}
+.del:hover{background:#e63946;border-color:#e63946;color:#fff}
+
+.datos{display:grid;grid-template-columns:2fr 1fr 1fr 1fr;gap:12px;align-items:end}
+.extra{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:14px;font-size:13px;color:#5b6572}
+.extra b{color:#2c3440}
+
+/* Exportar / importar */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.io-fondo{position:fixed;inset:0;background:rgba(30,40,55,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.io-caja{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.io-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.io-cab h3{margin:0}
+.io-caja textarea{width:100%;min-height:90px;padding:7px 10px;border-radius:8px;border:1px solid #d6dfeb;font-family:Consolas,monospace;font-size:11px;line-height:1.4;resize:vertical;word-break:break-all}
+.io-caja textarea:focus{outline:none;border-color:#7a9cc6;box-shadow:0 0 0 2px rgba(122,156,198,.15)}
+.io-caja hr{border:none;border-top:1px solid #e3eaf3;margin:16px 0}
+#ioErr{color:#a30000;font-weight:600}
+
+/* Estado de carga */
+.estado{display:flex;flex-direction:column;gap:10px}
+.cifras{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+.cifras .grande{font-size:24px;font-weight:700}
+.cifras .msg{font-size:14px;font-weight:600}
+.barra{height:14px;background:#e4edf7;border-radius:999px;overflow:hidden;position:relative}
+.barra i{display:block;height:100%;width:0;background:#4caf7d;border-radius:999px;transition:width .25s,background .25s}
+.barra.aviso i{background:#e8a33d}
+.barra.peligro i{background:#e63946}
+.ok{color:#2e8b57}.aviso-t{color:#b97a10}.peligro-t{color:#c0212e}
+
+/* Secciones */
+.sec{background:#f8fbff;border:1px solid #d9e6f5;border-radius:14px;overflow:hidden;margin-bottom:10px}
+.sec-head{display:flex;align-items:center;gap:10px;padding:8px 10px;cursor:pointer;background:#e8f0f8}
+.sec-head:hover{background:#dce6f0}
+.sec-head .tog{width:30px;padding:0;pointer-events:none}
+.sec-head .nombre{flex:1;font-weight:600;font-size:14px}
+.sec-head input.nombre-edit{flex:1;font-weight:600}
+.sec-head .tot{font-size:12px;font-weight:700;color:#3a4a5f;background:#fff;border:1px solid #d9e6f5;border-radius:6px;padding:3px 8px}
+.sec-body{padding:12px}
+.cab,.row{display:grid;grid-template-columns:1fr 70px 90px 80px 44px 34px;gap:8px;align-items:center}
+.cab{margin-bottom:6px}
+.cab label{margin:0;text-align:center}
+.cab label:first-child{text-align:left}
+.row{margin-bottom:6px}
+.row .tot-fila{text-align:right;font-size:13px;font-weight:600}
+.row .chk{display:flex;justify-content:center}
+.row.fuera .tot-fila{opacity:.4;text-decoration:line-through}
+.vacio-sec{font-size:12px;color:#5b6572;padding:4px 0 8px}
+.mon{display:grid;grid-template-columns:1fr 110px 90px;gap:8px;align-items:center;margin-bottom:6px;font-size:13px}
+.mon span.sub{text-align:right;font-weight:600}
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-top:6px}
+.leyenda{font-size:11px;color:#5b6572;margin-top:8px}
+
+@media (max-width:640px){
+  body{padding:12px 8px}
+  h1{font-size:19px}
+  .datos{grid-template-columns:1fr 1fr}
+  .datos>div:first-child{grid-column:1/-1}
+  .cab{display:none}
+  .row{grid-template-columns:1fr 64px 80px 34px;grid-template-areas:"n n n d" "c p t k";padding:8px;background:#fff;border:1px solid #e3eaf3;border-radius:10px}
+  .row .f-n{grid-area:n}.row .f-c{grid-area:c}.row .f-p{grid-area:p}.row .tot-fila{grid-area:t}.row .chk{grid-area:k}.row .del{grid-area:d}
+  .mon{grid-template-columns:1fr 100px 70px}
+  input[type=text],input[type=number],select,button{min-height:38px}
+}
+</style>
+</head>
+<body>
+<!-- ===== CABECERA COMÚN (pegar justo después de <body>) ===== -->
+<style>
+#dnd-nav,#dnd-nav *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+#dnd-nav{position:fixed;top:0;left:0;right:0;height:48px;z-index:1000;background:#3a4a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#dnd-nav a.dnd-logo{color:#fff;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:1px}
+#dnd-nav #dnd-nav-btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+#dnd-nav #dnd-nav-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.6)}
+#dnd-nav #dnd-menu{position:absolute;top:52px;right:16px;min-width:200px;background:#fff;border:1px solid #d9e2ec;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column}
+#dnd-nav #dnd-menu[hidden]{display:none}
+#dnd-nav #dnd-menu a{display:block;padding:10px 12px;border-radius:8px;color:#2c3440;text-decoration:none;font-size:14px;font-weight:600}
+#dnd-nav #dnd-menu a:hover{background:#e4edf7}
+#dnd-nav #dnd-menu a.actual{background:#444;color:#fff}
+#dnd-nav-spacer{height:48px}
+@media (max-width:700px){#dnd-nav #dnd-menu{right:8px;left:8px}}
+</style>
+<div id="dnd-nav">
+  <a class="dnd-logo" href="index.html">OneRoll</a>
+  <button type="button" id="dnd-nav-btn" aria-expanded="false">☰ Menú</button>
+  <div id="dnd-menu" hidden></div>
+</div>
+<div id="dnd-nav-spacer"></div>
+<script>
+(() => {
+  /* Edita aquí los enlaces si cambias nombres de archivo */
+  const LINKS = [
+    ['Inicio', 'index.html'],
+    ['Hojas', 'hojas.html'],
+    ['Iniciativa', 'iniciativa.html'],
+    ['Inventarios', 'inventarios.html'],
+    ['Stats', 'stats.html']
+  ];
+  const actual = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  const menu = document.getElementById('dnd-menu'), btn = document.getElementById('dnd-nav-btn');
+  menu.innerHTML = LINKS.map(([n, h]) => `<a href="${h}" class="${h === actual ? 'actual' : ''}">${n}</a>`).join('');
+  const cerrar = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+<!-- ===== FIN CABECERA COMÚN ===== -->
+<div class="hoja">
+  <div class="topbar">
+    <a class="volver" href="inventarios.html">← Mis inventarios</a>
+    <button type="button" id="btnIO">⇅ Exportar / importar</button>
+  </div>
+  <div class="io-fondo" id="ioFondo" hidden>
+    <div class="io-caja" role="dialog" aria-label="Exportar o importar">
+      <div class="io-cab"><h3>Exportar / importar inventario</h3><button type="button" id="ioCerrar">✖</button></div>
+      <label>Exportar: copia este texto y pégalo en el otro dispositivo</label>
+      <textarea id="ioOut" readonly rows="4"></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioCopiar">Copiar texto</button><span class="leyenda" id="ioMsg" style="margin:0"></span></div>
+      <hr>
+      <label>Importar: pega aquí el texto exportado</label>
+      <textarea id="ioIn" rows="4" placeholder="DND55INV1:..."></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioImportar">Importar y reemplazar este inventario</button></div>
+      <div class="leyenda" id="ioErr" style="margin-top:8px"></div>
+      <div class="leyenda" style="margin-top:8px">Al importar se sustituye todo lo de este inventario por lo del texto. En el móvil crea antes un inventario nuevo y haz la importación dentro de él.</div>
+    </div>
+  </div>
+  <h1 id="titulo">Inventario</h1>
+
+  <section class="panel">
+    <div class="datos">
+      <div><label>Nombre</label><input type="text" id="nombre" placeholder="Nombre del personaje o de la mochila"></div>
+      <div>
+        <label>Tamaño</label>
+        <select id="tam">
+          <option>Diminuto</option><option>Pequeño</option><option selected>Mediano</option>
+          <option>Grande</option><option>Enorme</option><option>Gargantuesco</option>
+        </select>
+      </div>
+      <div><label>Fuerza</label><input type="number" id="fue" min="1" max="30" value="10"></div>
+      <div>
+        <label>Unidad</label>
+        <select id="unidad"><option value="lb">Libras (lb)</option><option value="kg">Kilos (kg)</option></select>
+      </div>
+    </div>
+    <div class="extra">
+      <span>Capacidad de carga: <b id="cap">—</b></span>
+      <span>Empujar, arrastrar o levantar: <b id="emp">—</b></span>
+    </div>
+    <div class="leyenda">Capacidad = Fuerza × 15 lb (7,5 kg), multiplicada por el tamaño: Diminuto ×½, Pequeño/Mediano ×1, Grande ×2, Enorme ×3, Gargantuesco ×4. Empujar/arrastrar/levantar = el doble. En kilos se usa 1 kg = 2 lb, como en el manual en español.</div>
+    <label class="check" style="margin-top:12px"><input type="checkbox" id="variante"> Regla opcional de carga: cargado (&gt;5 × Fuerza lb) y muy cargado (&gt;10 × Fuerza lb)</label>
+  </section>
+
+  <section class="panel estado">
+    <div class="cifras">
+      <span class="grande"><span id="total">0</span> <small id="u1" style="font-size:14px;font-weight:600">lb</small></span>
+      <span class="msg" id="msg"></span>
+    </div>
+    <div class="barra" id="barra"><i id="barraI"></i></div>
+    <div class="leyenda" id="desglose" style="margin-top:0"></div>
+  </section>
+
+  <section class="panel">
+    <div id="secciones"></div>
+    <div class="toolbar"><button type="button" id="addSec">+ Añadir sección</button></div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const params = new URLSearchParams(location.search);
+  const id = params.get('id');
+  if (!id) { location.replace('inventarios.html'); return; }
+  const KEY = 'dnd55_inv_' + id;
+  const IDX = 'dnd55_inv_indice';
+
+  const $ = (s, r = document) => r.querySelector(s);
+  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
+  const numf = v => { const n = parseFloat(String(v).replace(',', '.')); return isNaN(n) ? 0 : n; };
+  const fmtN = n => (Math.round(n * 100) / 100).toLocaleString('es-ES');
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/"/g, '&quot;').replace(/</g, '&lt;');
+
+  const MULT = { Diminuto: .5, 'Pequeño': 1, Mediano: 1, Grande: 2, Enorme: 3, Gargantuesco: 4 };
+  const MONEDAS = [['pp', 'Platino (pp)'], ['gp', 'Oro (po)'], ['ep', 'Electro (pe)'], ['sp', 'Plata (pp)'], ['cp', 'Cobre (pc)']];
+  MONEDAS[0][1] = 'Platino (ppt)'; MONEDAS[3][1] = 'Plata (ppl)';
+  const SECCIONES_BASE = ['Armas', 'Armaduras', 'Objetos', 'Materiales', 'Munición', 'Consumibles y pociones', 'Herramientas'];
+
+  let uid = 0;
+  const nuevaSec = (nombre, custom) => ({ id: 's' + Date.now().toString(36) + (uid++), nombre, custom: !!custom, open: false, filas: [] });
+
+  const defState = () => ({
+    nombre: '', tam: 'Mediano', fue: '10', unidad: 'lb', variante: false,
+    monedas: { pp: '', gp: '', ep: '', sp: '', cp: '' }, monOpen: false,
+    secciones: SECCIONES_BASE.map(n => nuevaSec(n, false))
+  });
+  let state = defState();
+  try {
+    const raw = localStorage.getItem(KEY);
+    if (raw) { const d = JSON.parse(raw); state = Object.assign(defState(), d); state.monedas = Object.assign(defState().monedas, d.monedas || {}); }
+  } catch (e) { console.error(e); }
+
+  function ensureIndex() {
+    try {
+      const a = JSON.parse(localStorage.getItem(IDX) || '[]');
+      if (!a.includes(id)) { a.push(id); localStorage.setItem(IDX, JSON.stringify(a)); }
+    } catch (e) {}
+  }
+  let timer;
+  const flush = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); ensureIndex(); } catch (e) { console.error(e); } };
+  const save = () => { clearTimeout(timer); timer = setTimeout(flush, 250); };
+  addEventListener('beforeunload', flush);
+
+  /* ===== Cálculos ===== */
+  const u = () => state.unidad === 'kg' ? 'kg' : 'lb';
+  const fue = () => Math.min(30, Math.max(1, numf(state.fue) || 10));
+  const capacidad = () => fue() * (u() === 'lb' ? 15 : 7.5) * (MULT[state.tam] || 1);
+  const pesoMoneda = q => numf(q) * (u() === 'lb' ? 0.02 : 0.01); // 50 monedas = 1 lb
+  const pesoFila = f => f.llevo === false ? 0 : Math.max(0, numf(f.cant)) * Math.max(0, numf(f.peso));
+  const pesoSec = s => s.filas.reduce((t, f) => t + pesoFila(f), 0);
+  const pesoMonedas = () => MONEDAS.reduce((t, [k]) => t + pesoMoneda(state.monedas[k]), 0);
+
+  function recalc() {
+    const un = u(), cap = capacidad();
+    const total = pesoMonedas() + state.secciones.reduce((t, s) => t + pesoSec(s), 0);
+    $('#cap').textContent = fmtN(cap) + ' ' + un;
+    $('#emp').textContent = fmtN(cap * 2) + ' ' + un;
+    $('#total').textContent = fmtN(total);
+    $('#u1').textContent = un;
+
+    const msg = $('#msg'), barra = $('#barra');
+    barra.className = 'barra'; msg.className = 'msg';
+    const pct = cap > 0 ? total / cap * 100 : 0;
+    $('#barraI').style.width = Math.min(100, pct) + '%';
+    let txt;
+    if (total > cap) {
+      barra.classList.add('peligro'); msg.classList.add('peligro-t');
+      txt = 'Sobrepasas el límite en ' + fmtN(total - cap) + ' ' + un + ' (' + fmtN(cap) + ' ' + un + ' máx.)';
+    } else {
+      msg.classList.add('ok');
+      txt = 'Dentro del límite. Te quedan ' + fmtN(cap - total) + ' ' + un + ' (' + fmtN(cap) + ' ' + un + ' máx.)';
+      if (pct >= 85) { barra.classList.add('aviso'); msg.className = 'msg aviso-t'; }
+    }
+    if (state.variante) {
+      // Umbrales de la regla opcional, expresados en la unidad elegida (5×Fuerza lb / 10×Fuerza lb)
+      const f = u() === 'lb' ? 1 : 0.5, mm = (MULT[state.tam] || 1);
+      const t1 = fue() * 5 * f * mm, t2 = fue() * 10 * f * mm;
+      let extra = '';
+      if (total > t2) extra = ' · Muy cargado (velocidad −20 pies, desventaja en pruebas, ataques y salvaciones de Fuerza, Destreza y Constitución)';
+      else if (total > t1) extra = ' · Cargado (velocidad −10 pies)';
+      if (extra && total <= cap) { barra.classList.add('aviso'); msg.className = 'msg aviso-t'; }
+      txt += extra;
+    }
+    msg.textContent = txt;
+
+    const partes = ['Monedas: ' + fmtN(pesoMonedas()) + ' ' + un];
+    state.secciones.forEach(s => { const p = pesoSec(s); if (p > 0) partes.push(s.nombre + ': ' + fmtN(p) + ' ' + un); });
+    $('#desglose').textContent = partes.join(' · ');
+
+    $$('[data-tot-sec]').forEach(e => {
+      const s = state.secciones.find(x => x.id === e.dataset.totSec);
+      if (s) e.textContent = fmtN(pesoSec(s)) + ' ' + un;
+    });
+    const tm = $('#totMon'); if (tm) tm.textContent = fmtN(pesoMonedas()) + ' ' + un;
+    $$('[data-mon-peso]').forEach(e => e.textContent = fmtN(pesoMoneda(state.monedas[e.dataset.monPeso])) + ' ' + un);
+  }
+
+  function titulo() {
+    const n = state.nombre || 'Inventario sin nombre';
+    $('#titulo').textContent = n;
+    document.title = n + ' · Inventario';
+  }
+
+  /* ===== Render de secciones ===== */
+  function cardShell(tit, totAttr, open, custom) {
+    const el = document.createElement('div');
+    el.className = 'sec';
+    el.innerHTML = `
+      <div class="sec-head">
+        <button type="button" class="tog"></button>
+        ${custom ? '<input type="text" class="nombre-edit" placeholder="Nombre de la sección">' : '<span class="nombre"></span>'}
+        <span class="tot" ${totAttr}></span>
+        ${custom ? '<button type="button" class="del" title="Eliminar sección">✖</button>' : ''}
+      </div>
+      <div class="sec-body"></div>`;
+    return el;
+  }
+  function bindToggle(el, getOpen, setOpen) {
+    const body = $('.sec-body', el), tog = $('.tog', el);
+    const show = () => { body.hidden = !getOpen(); tog.textContent = getOpen() ? '▲' : '▼'; };
+    $('.sec-head', el).addEventListener('click', e => {
+      if (e.target.closest('.del') || e.target.closest('input')) return;
+      setOpen(!getOpen()); show(); save();
+    });
+    show();
+  }
+
+  function renderMonedas(cont) {
+    const el = cardShell('Monedas', 'id="totMon"', state.monOpen, false);
+    $('.nombre', el).textContent = 'Monedas';
+    const body = $('.sec-body', el);
+    body.innerHTML = MONEDAS.map(([k, n]) => `
+      <div class="mon"><span>${n}</span>
+        <input type="number" min="0" data-mon="${k}" placeholder="0">
+        <span class="sub" data-mon-peso="${k}">0</span></div>`).join('') +
+      '<div class="leyenda">50 monedas pesan 1 lb, es decir, 100 monedas pesan 1 kg.</div>';
+    $$('[data-mon]', body).forEach(inp => {
+      inp.value = state.monedas[inp.dataset.mon];
+      inp.addEventListener('input', () => { state.monedas[inp.dataset.mon] = inp.value; recalc(); save(); });
+    });
+    bindToggle(el, () => state.monOpen, v => state.monOpen = v);
+    cont.appendChild(el);
+  }
+
+  function renderFila(s, f, lista) {
+    const row = document.createElement('div');
+    row.className = 'row';
+    row.innerHTML = `
+      <input class="f-n" type="text" placeholder="Objeto" data-k="nombre">
+      <input class="f-c" type="number" min="0" step="1" placeholder="1" data-k="cant">
+      <input class="f-p" type="number" min="0" step="any" placeholder="0" data-k="peso">
+      <span class="tot-fila"></span>
+      <span class="chk"><input type="checkbox" data-k="llevo" title="Lo llevo encima (desmarca si lo dejas guardado)"></span>
+      <button type="button" class="del" title="Quitar fila">✖</button>`;
+    const tot = $('.tot-fila', row);
+    const upd = () => {
+      tot.textContent = fmtN(Math.max(0, numf(f.cant)) * Math.max(0, numf(f.peso))) + ' ' + u();
+      row.classList.toggle('fuera', f.llevo === false);
+    };
+    $$('[data-k]', row).forEach(inp => {
+      const k = inp.dataset.k;
+      if (inp.type === 'checkbox') inp.checked = f.llevo !== false; else inp.value = f[k] ?? '';
+      inp.addEventListener('input', () => {
+        f[k] = inp.type === 'checkbox' ? inp.checked : inp.value;
+        upd(); recalc(); save();
+      });
+    });
+    $('.del', row).addEventListener('click', () => {
+      s.filas = s.filas.filter(x => x !== f); row.remove();
+      renderVacio(s, lista); recalc(); save();
+    });
+    row._upd = upd; upd();
+    return row;
+  }
+  function renderVacio(s, lista) {
+    let v = $('.vacio-sec', lista.parentElement);
+    if (!s.filas.length) {
+      if (!v) { v = document.createElement('div'); v.className = 'vacio-sec'; v.textContent = 'Sin objetos todavía.'; lista.parentElement.insertBefore(v, lista); }
+    } else if (v) v.remove();
+  }
+
+  function renderSec(s, cont) {
+    const el = cardShell(s.nombre, `data-tot-sec="${s.id}"`, s.open, s.custom);
+    const body = $('.sec-body', el);
+    body.innerHTML = `
+      <div class="cab"><label>Objeto</label><label>Cant.</label><label>Peso/ud.</label><label>Total</label><label title="Lo llevo encima">Llevo</label><span></span></div>
+      <div class="filas"></div>
+      <div class="toolbar"><button type="button" class="add">+ Añadir objeto</button></div>`;
+    const lista = $('.filas', body);
+    s.filas.forEach(f => lista.appendChild(renderFila(s, f, lista)));
+    renderVacio(s, lista);
+    $('.add', body).addEventListener('click', () => {
+      const f = { nombre: '', cant: '1', peso: '', llevo: true };
+      s.filas.push(f); lista.appendChild(renderFila(s, f, lista));
+      renderVacio(s, lista); recalc(); save();
+      const last = lista.lastElementChild; if (last) $('input', last).focus();
+    });
+    if (s.custom) {
+      const ne = $('.nombre-edit', el);
+      ne.value = s.nombre;
+      ne.addEventListener('input', () => { s.nombre = ne.value; recalc(); save(); });
+      $('.sec-head .del', el).addEventListener('click', () => {
+        if (!confirm('¿Eliminar la sección "' + (s.nombre || 'sin nombre') + '" y sus objetos?')) return;
+        state.secciones = state.secciones.filter(x => x !== s); el.remove(); recalc(); save();
+      });
+    } else $('.nombre', el).textContent = s.nombre;
+    bindToggle(el, () => s.open, v => s.open = v);
+    cont.appendChild(el);
+  }
+
+  function renderAll() {
+    const cont = $('#secciones'); cont.innerHTML = '';
+    renderMonedas(cont);
+    state.secciones.forEach(s => renderSec(s, cont));
+  }
+
+  /* ===== Cabecera ===== */
+  const nombre = $('#nombre'), tam = $('#tam'), fueI = $('#fue'), unidad = $('#unidad'), variante = $('#variante');
+  nombre.value = state.nombre; tam.value = state.tam; fueI.value = state.fue; unidad.value = state.unidad; variante.checked = !!state.variante;
+  nombre.addEventListener('input', () => { state.nombre = nombre.value; titulo(); save(); });
+  tam.addEventListener('input', () => { state.tam = tam.value; recalc(); save(); });
+  fueI.addEventListener('input', () => { state.fue = fueI.value; recalc(); save(); });
+  variante.addEventListener('input', () => { state.variante = variante.checked; recalc(); save(); });
+  unidad.addEventListener('input', () => {
+    // Al cambiar de unidad se convierten los pesos ya escritos (1 kg = 2 lb)
+    const nueva = unidad.value;
+    if (nueva !== state.unidad) {
+      const k = nueva === 'kg' ? 0.5 : 2;
+      state.secciones.forEach(s => s.filas.forEach(f => {
+        if (String(f.peso).trim() !== '') f.peso = String(Math.round(numf(f.peso) * k * 1000) / 1000);
+      }));
+      state.unidad = nueva;
+      renderAll();
+    }
+    recalc(); save();
+  });
+
+  $('#addSec').addEventListener('click', () => {
+    const s = nuevaSec('', true); s.open = true; state.secciones.push(s);
+    renderSec(s, $('#secciones')); recalc(); save();
+    const inp = $('#secciones .sec:last-child .nombre-edit'); if (inp) inp.focus();
+  });
+
+  /* ===== Exportar / importar como texto ===== */
+  const PREFIJO = 'DND55INV1:';
+  const aTexto = obj => PREFIJO + btoa(unescape(encodeURIComponent(JSON.stringify(obj))));
+  const deTexto = txt => {
+    let t = String(txt).replace(/\s+/g, '');
+    if (!t) throw new Error('Pega primero el texto exportado.');
+    if (t.startsWith('DND55HOJA1:')) throw new Error('Ese texto es de una HOJA de personaje, no de un inventario.');
+    if (t.startsWith(PREFIJO)) {
+      try { t = decodeURIComponent(escape(atob(t.slice(PREFIJO.length)))); }
+      catch (e) { throw new Error('El texto está incompleto o cortado. Cópialo entero, incluido el principio y el final.'); }
+    } else if (!t.startsWith('{')) throw new Error('El texto debe empezar por ' + PREFIJO);
+    let o;
+    try { o = JSON.parse(t); } catch (e) { throw new Error('El texto está dañado y no se puede leer.'); }
+    if (!o || typeof o !== 'object' || !Array.isArray(o.secciones) || !o.monedas || typeof o.monedas !== 'object') throw new Error('El texto no tiene la estructura de un inventario.');
+    return o;
+  };
+  const ioMsg = t => { $('#ioMsg').textContent = t; if (t) setTimeout(() => { $('#ioMsg').textContent = ''; }, 2500); };
+  $('#btnIO').addEventListener('click', () => {
+    $('#ioOut').value = aTexto(state);
+    $('#ioIn').value = '';
+    $('#ioErr').textContent = '';
+    $('#ioFondo').hidden = false;
+  });
+  const cerrarIO = () => { $('#ioFondo').hidden = true; };
+  $('#ioCerrar').addEventListener('click', cerrarIO);
+  $('#ioFondo').addEventListener('click', e => { if (e.target.id === 'ioFondo') cerrarIO(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrarIO(); });
+  $('#ioOut').addEventListener('focus', e => e.target.select());
+  $('#ioCopiar').addEventListener('click', () => {
+    const ta = $('#ioOut');
+    const respaldo = () => { ta.focus(); ta.select(); try { document.execCommand('copy'); ioMsg('Copiado'); } catch (e) { ioMsg('Selecciónalo y cópialo a mano'); } };
+    if (navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(ta.value).then(() => ioMsg('Copiado'), respaldo);
+    else respaldo();
+  });
+  $('#ioImportar').addEventListener('click', () => {
+    $('#ioErr').textContent = '';
+    let datos;
+    try { datos = deTexto($('#ioIn').value); } catch (e) { $('#ioErr').textContent = e.message; return; }
+    if (!confirm('Esto reemplaza todo lo de este inventario por lo importado. ¿Continuar?')) return;
+    try {
+      const nuevo = Object.assign(defState(), datos);
+      nuevo.monedas = Object.assign(defState().monedas, datos.monedas);
+      localStorage.setItem(KEY, JSON.stringify(nuevo)); ensureIndex();
+    } catch (e) { $('#ioErr').textContent = 'No se pudo guardar el inventario importado: ' + e.message; return; }
+    clearTimeout(timer);
+    removeEventListener('beforeunload', flush);
+    location.reload();
+  });
+
+  titulo(); renderAll(); recalc(); flush();
+})();
+</script>
+</body>
+</html>
