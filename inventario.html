@@ -29,6 +29,16 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
 .extra{display:flex;flex-wrap:wrap;gap:8px 24px;margin-top:14px;font-size:13px;color:#5b6572}
 .extra b{color:#2c3440}
 
+/* Exportar / importar */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.io-fondo{position:fixed;inset:0;background:rgba(30,40,55,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.io-caja{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.io-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.io-cab h3{margin:0}
+.io-caja textarea{width:100%;min-height:90px;padding:7px 10px;border-radius:8px;border:1px solid #d6dfeb;font-family:Consolas,monospace;font-size:11px;line-height:1.4;resize:vertical;word-break:break-all}
+.io-caja textarea:focus{outline:none;border-color:#7a9cc6;box-shadow:0 0 0 2px rgba(122,156,198,.15)}
+.io-caja hr{border:none;border-top:1px solid #e3eaf3;margin:16px 0}
+
 /* Estado de carga */
 .estado{display:flex;flex-direction:column;gap:10px}
 .cifras{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
@@ -119,7 +129,23 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
 </script>
 <!-- ===== FIN CABECERA COMÚN ===== -->
 <div class="hoja">
-  <a class="volver" href="inventarios.html">← Mis inventarios</a>
+  <div class="topbar">
+    <a class="volver" href="inventarios.html">← Mis inventarios</a>
+    <button type="button" id="btnIO">⇅ Exportar / importar</button>
+  </div>
+  <div class="io-fondo" id="ioFondo" hidden>
+    <div class="io-caja" role="dialog" aria-label="Exportar o importar">
+      <div class="io-cab"><h3>Exportar / importar inventario</h3><button type="button" id="ioCerrar">✖</button></div>
+      <label>Exportar: copia este texto y pégalo en el otro dispositivo</label>
+      <textarea id="ioOut" readonly rows="4"></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioCopiar">Copiar texto</button><span class="leyenda" id="ioMsg" style="margin:0"></span></div>
+      <hr>
+      <label>Importar: pega aquí el texto exportado</label>
+      <textarea id="ioIn" rows="4" placeholder="DND55INV1:..."></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioImportar">Importar y reemplazar este inventario</button></div>
+      <div class="leyenda" style="margin-top:8px">Al importar se sustituye todo lo de este inventario por lo del texto. En el móvil crea antes un inventario nuevo y haz la importación dentro de él.</div>
+    </div>
+  </div>
   <h1 id="titulo">Inventario</h1>
 
   <section class="panel">
