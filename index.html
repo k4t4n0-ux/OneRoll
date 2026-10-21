@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>OneRoll</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+body{background:#f3f6fb;color:#2c3440;padding:24px}
+.hoja{max-width:900px;margin:auto;width:100%}
+h1{text-align:center;margin:6px 0 8px;font-size:26px;font-weight:600;letter-spacing:1px;color:#3a4a5f}
+.sub{text-align:center;color:#5b6572;font-size:14px;margin-bottom:24px}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:14px}
+.card{display:block;text-decoration:none;color:inherit;background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:22px 18px;box-shadow:0 3px 10px rgba(0,0,0,.04);transition:.2s}
+.card:hover{border-color:#7a9cc6;transform:translateY(-2px);box-shadow:0 6px 16px rgba(122,156,198,.25)}
+.card .ico{font-size:30px;display:block;margin-bottom:8px}
+.card strong{display:block;font-size:16px;color:#3a4a5f;margin-bottom:4px}
+.card span.d{font-size:12px;color:#5b6572;line-height:1.4}
+@media (max-width:700px){body{padding:12px 8px}h1{font-size:19px}}
+</style>
+</head>
+<body>
+
+<!-- ===== CABECERA COMÚN (pegar justo después de <body>) ===== -->
+<style>
+#dnd-nav,#dnd-nav *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+#dnd-nav{position:fixed;top:0;left:0;right:0;height:48px;z-index:1000;background:#3a4a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#dnd-nav a.dnd-logo{color:#fff;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:1px}
+#dnd-nav #dnd-nav-btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+#dnd-nav #dnd-nav-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.6)}
+#dnd-nav #dnd-menu{position:absolute;top:52px;right:16px;min-width:200px;background:#fff;border:1px solid #d9e2ec;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column}
+#dnd-nav #dnd-menu[hidden]{display:none}
+#dnd-nav #dnd-menu a{display:block;padding:10px 12px;border-radius:8px;color:#2c3440;text-decoration:none;font-size:14px;font-weight:600}
+#dnd-nav #dnd-menu a:hover{background:#e4edf7}
+#dnd-nav #dnd-menu a.actual{background:#444;color:#fff}
+#dnd-nav-spacer{height:48px}
+@media (max-width:700px){#dnd-nav #dnd-menu{right:8px;left:8px}}
+</style>
+<div id="dnd-nav">
+  <a class="dnd-logo" href="index.html">OneRoll</a>
+  <button type="button" id="dnd-nav-btn" aria-expanded="false">☰ Menú</button>
+  <div id="dnd-menu" hidden></div>
+</div>
+<div id="dnd-nav-spacer"></div>
+<script>
+(() => {
+  /* Edita aquí los enlaces si cambias nombres de archivo */
+  const LINKS = [
+    ['Inicio', 'index.html'],
+    ['Hojas', 'hojas.html'],
+    ['Iniciativa', 'iniciativa.html'],
+    ['Inventarios', 'inventarios.html'],
+    ['Stats', 'stats.html']
+  ];
+  const actual = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  const menu = document.getElementById('dnd-menu'), btn = document.getElementById('dnd-nav-btn');
+  menu.innerHTML = LINKS.map(([n, h]) => `<a href="${h}" class="${h === actual ? 'actual' : ''}">${n}</a>`).join('');
+  const cerrar = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+<!-- ===== FIN CABECERA COMÚN ===== -->
+
+<div class="hoja">
+  <h1>D&amp;D 5.5</h1>
+  <p class="sub">Herramientas de mesa</p>
+  <div class="grid">
+    <a class="card" href="hojas.html"><span class="ico">📜</span><strong>Hojas</strong><span class="d">Hojas de personaje</span></a>
+    <a class="card" href="iniciativa.html"><span class="ico">⚔️</span><strong>Iniciativa</strong><span class="d">Orden de combate, rondas y condiciones</span></a>
+    <a class="card" href="inventarios.html"><span class="ico">🎒</span><strong>Inventarios</strong><span class="d">Objetos y equipo</span></a>
+    <a class="card" href="stats.html"><span class="ico">🎲</span><strong>Stats</strong><span class="d">Calculadora de características</span></a>
+  </div>
+</div>
+</body>
+</html>

@@ -1,0 +1,440 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Calculadora de características · OneRoll</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+body{background:#f3f6fb;color:#2c3440;padding:24px}
+.hoja{max-width:900px;margin:auto;width:100%}
+h1{text-align:center;margin:6px 0 22px;font-size:26px;font-weight:600;letter-spacing:1px;color:#3a4a5f}
+h3{font-size:15px;font-weight:600;color:#3a4a5f;margin:4px 0 10px}
+[hidden]{display:none!important}
+.panel{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.04);margin-bottom:18px}
+input[type=number],input[type=text]{width:100%;height:32px;padding:0 8px;border-radius:8px;border:1px solid #d6dfeb;font-size:13px;background:#fff}
+input[type=number]{text-align:center}
+select{width:100%;height:32px;padding:0 6px;border-radius:8px;border:1px solid #d6dfeb;font-size:13px;background:#fff}
+input:focus,select:focus{outline:none;border-color:#7a9cc6;box-shadow:0 0 0 2px rgba(122,156,198,.15)}
+input[type=checkbox]{width:15px;height:15px;accent-color:#7a9cc6;cursor:pointer}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5b6572;margin-bottom:4px}
+label.check{display:flex;align-items:center;gap:6px;font-size:13px;font-weight:500;text-transform:none;letter-spacing:0;color:#2c3440;cursor:pointer;margin:0}
+button{height:32px;padding:0 12px;border-radius:8px;border:1px solid #cbd8ea;background:#e4edf7;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s;color:#2c3440}
+button:hover:not(:disabled){background:#7a9cc6;color:#fff;border-color:#7a9cc6}
+button:disabled{opacity:.4;cursor:not-allowed}
+.leyenda{font-size:12px;color:#5b6572;line-height:1.5}
+
+/* Métodos */
+.metodos{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:8px}
+.metodo{height:auto;min-height:54px;padding:8px 12px;display:flex;flex-direction:column;align-items:flex-start;gap:3px;text-align:left;white-space:normal;background:#f8fbff;border:1px solid #d9e6f5}
+.metodo strong{font-size:13px}
+.metodo .tag{font-size:9px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;background:#7a9cc6;color:#fff;border-radius:5px;padding:2px 6px}
+.metodo .tag.no{background:#e8a33d}
+.metodo.activo{background:#444;border-color:#444;color:#fff}
+.metodo.activo:hover:not(:disabled){background:#444;border-color:#444}
+.metodo.activo .tag{background:#fff;color:#444}
+
+/* Reglas */
+.reglas-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;align-items:end;margin-top:12px}
+.tabla-coste{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}
+.tabla-coste span{font-size:12px;background:#f8fbff;border:1px solid #d9e6f5;border-radius:8px;padding:4px 8px}
+.extra-add{display:flex;gap:8px;max-width:420px}
+
+/* Estado */
+.estado{display:flex;flex-direction:column;gap:10px}
+.cifras{display:flex;justify-content:space-between;align-items:baseline;flex-wrap:wrap;gap:6px}
+.cifras .grande{font-size:24px;font-weight:700}
+.cifras .msg{font-size:14px;font-weight:600}
+.barra{height:14px;background:#e4edf7;border-radius:999px;overflow:hidden}
+.barra i{display:block;height:100%;width:0;background:#4caf7d;border-radius:999px;transition:width .25s,background .25s}
+.barra.lleno i{background:#7a9cc6}
+.ok{color:#2e8b57}.aviso-t{color:#b97a10}
+
+/* Dados */
+.toolbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center}
+.pool{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.chip{background:#f8fbff;border:1px solid #d9e6f5;border-radius:12px;padding:6px 10px;min-width:92px;text-align:center}
+.chip.usado{opacity:.4}
+.chip b{display:block;font-size:20px}
+.chip small{font-size:11px;color:#5b6572}
+.chip s{color:#c0212e}
+.chip.nuevo{animation:pop .35s ease}
+@keyframes pop{0%{transform:scale(.6);opacity:0}100%{transform:scale(1);opacity:1}}
+
+/* Tabla */
+.cab,.fila{display:grid;grid-template-columns:1.2fr 1.9fr 70px 56px 56px;gap:10px;align-items:center}
+.cab{margin-bottom:6px}
+.cab label{margin:0;text-align:center}
+.cab label:first-child{text-align:left}
+.fila{padding:8px 0;border-top:1px solid #e3eaf3}
+.fila strong{font-size:14px;word-break:break-word}
+.fila .final,.fila .mod{text-align:center;font-weight:700;font-size:16px}
+.fila .mod{color:#3a4a5f}
+.base{display:grid;grid-template-columns:34px 1fr 34px;gap:6px;align-items:center}
+.base button{padding:0;width:34px}
+.sub{font-size:11px;color:#5b6572;margin-top:3px;text-align:center}
+.resumen{display:flex;justify-content:space-between;flex-wrap:wrap;gap:8px;margin-top:12px;padding-top:12px;border-top:1px solid #e3eaf3;font-size:13px}
+.resumen b{font-size:15px}
+.quitar{height:22px;width:22px;padding:0;margin-left:6px;border-radius:50%;font-size:14px;line-height:1;vertical-align:middle}
+
+@media (max-width:640px){
+  body{padding:12px 8px}
+  h1{font-size:19px}
+  .cab,.fila{grid-template-columns:1fr 1.6fr 54px 42px 42px;gap:6px}
+  .fila strong{font-size:12.5px}
+  .base{grid-template-columns:30px 1fr 30px;gap:4px}
+  .base button{width:30px}
+  select,input[type=number],input[type=text],button{min-height:38px}
+  .quitar{min-height:0}
+}
+</style>
+</head>
+<body>
+<!-- ===== CABECERA COMÚN (pegar justo después de <body>) ===== -->
+<style>
+#dnd-nav,#dnd-nav *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+#dnd-nav{position:fixed;top:0;left:0;right:0;height:48px;z-index:1000;background:#3a4a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#dnd-nav a.dnd-logo{color:#fff;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:1px}
+#dnd-nav #dnd-nav-btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+#dnd-nav #dnd-nav-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.6)}
+#dnd-nav #dnd-menu{position:absolute;top:52px;right:16px;min-width:200px;background:#fff;border:1px solid #d9e2ec;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column}
+#dnd-nav #dnd-menu[hidden]{display:none}
+#dnd-nav #dnd-menu a{display:block;padding:10px 12px;border-radius:8px;color:#2c3440;text-decoration:none;font-size:14px;font-weight:600}
+#dnd-nav #dnd-menu a:hover{background:#e4edf7}
+#dnd-nav #dnd-menu a.actual{background:#444;color:#fff}
+#dnd-nav-spacer{height:48px}
+@media (max-width:700px){#dnd-nav #dnd-menu{right:8px;left:8px}}
+</style>
+<div id="dnd-nav">
+  <a class="dnd-logo" href="index.html">OneRoll</a>
+  <button type="button" id="dnd-nav-btn" aria-expanded="false">☰ Menú</button>
+  <div id="dnd-menu" hidden></div>
+</div>
+<div id="dnd-nav-spacer"></div>
+<script>
+(() => {
+  /* Edita aquí los enlaces si cambias nombres de archivo */
+  const LINKS = [
+    ['Inicio', 'index.html'],
+    ['Hojas', 'hojas.html'],
+    ['Iniciativa', 'iniciativa.html'],
+    ['Inventarios', 'inventarios.html'],
+    ['Stats', 'stats.html']
+  ];
+  const actual = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  const menu = document.getElementById('dnd-menu'), btn = document.getElementById('dnd-nav-btn');
+  menu.innerHTML = LINKS.map(([n, h]) => `<a href="${h}" class="${h === actual ? 'actual' : ''}">${n}</a>`).join('');
+  const cerrar = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+<!-- ===== FIN CABECERA COMÚN ===== -->
+<div class="hoja">
+  <h1>Calculadora de características</h1>
+
+  <section class="panel">
+    <h3>Método</h3>
+    <div class="metodos" id="metodos"></div>
+  </section>
+
+  <section class="panel" id="panelReglas">
+    <h3 id="rTitulo"></h3>
+    <div class="leyenda" id="rDesc"></div>
+    <div class="reglas-grid" id="rParams" hidden>
+      <div><label>Mínimo</label><input type="number" id="pMin" min="1" max="30"></div>
+      <div><label>Máximo</label><input type="number" id="pMax" min="1" max="30"></div>
+      <div><label>Puntos a repartir</label><input type="number" id="pPts" min="0" max="500"></div>
+    </div>
+    <div id="rExtraWrap" style="margin-top:12px" hidden>
+      <label>Añadir nueva característica</label>
+      <div class="extra-add">
+        <input type="text" id="extraNombre" placeholder="Nombre (p. ej. Suerte)" maxlength="24">
+        <button type="button" id="extraAdd">Añadir</button>
+      </div>
+    </div>
+    <div class="tabla-coste" id="rCoste" hidden></div>
+  </section>
+
+  <section class="panel estado" id="panelEstado"></section>
+
+  <section class="panel">
+    <div class="cab">
+      <label>Característica</label><label id="cabBase">Base</label><label title="Trasfondo, especie, dotes, objetos…">Bonif.</label><label>Total</label><label>Mod.</label>
+    </div>
+    <div id="tabla"></div>
+    <div class="resumen">
+      <span>Suma de bases: <b id="sumBase">0</b></span>
+      <span>Suma de modificadores: <b id="sumMod">0</b></span>
+    </div>
+    <div class="toolbar" style="margin-top:12px">
+      <button type="button" id="reiniciar">Reiniciar método</button>
+    </div>
+  </section>
+</div>
+
+<script>
+(() => {
+  const KEY = 'dnd55_stats';
+  const $ = s => document.querySelector(s);
+  const num = v => { const n = parseInt(v); return isNaN(n) ? 0 : n; };
+  const fmt = n => n >= 0 ? '+' + n : String(n);
+  const modDe = v => Math.floor((v - 10) / 2);
+  const esc = s => String(s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+  const STATS = [['fue','Fuerza'],['des','Destreza'],['con','Constitución'],['int','Inteligencia'],['sab','Sabiduría'],['car','Carisma']];
+  const COSTE = { 8: 0, 9: 1, 10: 2, 11: 3, 12: 4, 13: 5, 14: 7, 15: 9 };
+
+  /* extra: true = permite añadir características nuevas */
+  const METODOS = {
+    oficial: { nombre: 'Compra de 27 puntos', tag: 'Oficial', cls: '', tipo: 'puntos', min: 8, max: 15, puntos: 27, tabla: true, edit: false, extra: true,
+      desc: 'Regla oficial. Todas las características empiezan en 8 y compras subidas hasta 15 con una tabla de costes: de 8 a 13 cada punto cuesta 1, y 14 y 15 cuestan 2 puntos cada uno.' },
+    libre27: { nombre: 'Puntos libres', tag: 'No oficial', cls: 'no', tipo: 'puntos', min: 8, max: 15, puntos: 27, tabla: false, edit: true, extra: true,
+      desc: 'Variante de mesa: puntos a repartir sin tabla de costes. Cada punto sube 1 la característica, también de 14 a 15. Mínimo y máximo editables.' },
+    d4d6: { nombre: 'Dados: 4d6', tag: 'Clásico', cls: '', tipo: 'dados', dados: 4, extra: true,
+      desc: 'Tiras 4d6 y descartas el dado más bajo, una vez por característica. Después asignas cada resultado a la característica que quieras.' },
+    d3d6: { nombre: 'Dados: 3d6', tag: 'Clásico', cls: '', tipo: 'dados', dados: 3, extra: true,
+      desc: 'Tiras 3d6 y sumas, una vez por característica. Después asignas cada resultado a la característica que quieras.' },
+    array: { nombre: 'Conjunto estándar', tag: 'Oficial', cls: '', tipo: 'array', valores: [15, 14, 13, 12, 10, 8], extra: true,
+      desc: 'Regla oficial: los valores 15, 14, 13, 12, 10 y 8 se asignan a las características como quieras.' }
+  };
+
+  /* ===== Estado ===== */
+  const defState = () => ({ metodo: 'oficial', extras: [], bonus: {}, pts: {}, dados: {} });
+  let state = defState();
+  try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(defState(), JSON.parse(raw)); } catch (e) {}
+  if (!METODOS[state.metodo]) state.metodo = 'oficial';
+  if (!Array.isArray(state.extras)) state.extras = [];
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} };
+
+  const def = () => METODOS[state.metodo];
+  const esExtra = k => state.extras.some(e => e.id === k);
+  const activos = () => STATS.concat(def().extra ? state.extras.map(e => [e.id, e.nombre]) : []);
+
+  /* ===== Métodos por puntos ===== */
+  function P() {
+    const d = def();
+    if (!state.pts[state.metodo]) state.pts[state.metodo] = { min: d.min, max: d.max, puntos: d.puntos, vals: {} };
+    return state.pts[state.metodo];
+  }
+  const valP = (p, k) => (p.vals[k] === undefined ? p.min : p.vals[k]);
+  const coste = (p, v) => def().tabla ? (COSTE[v] !== undefined ? COSTE[v] : 99) : Math.max(0, v - p.min);
+  const gastado = p => activos().reduce((t, [k]) => t + coste(p, valP(p, k)), 0);
+
+  function setVal(k, v) {
+    const p = P();
+    v = Math.min(p.max, Math.max(p.min, v));
+    const otros = activos().reduce((t, [kk]) => kk === k ? t : t + coste(p, valP(p, kk)), 0);
+    while (v > p.min && otros + coste(p, v) > p.puntos) v--;
+    p.vals[k] = v;
+  }
+
+  /* ===== Métodos por dados / conjunto ===== */
+  function D() {
+    if (!state.dados[state.metodo]) state.dados[state.metodo] = { rolls: [], asig: {} };
+    return state.dados[state.metodo];
+  }
+  const d6 = () => 1 + Math.floor(Math.random() * 6);
+  function tirar(n) {
+    const dice = Array.from({ length: n }, d6);
+    let drop = -1, total = dice.reduce((a, b) => a + b, 0);
+    if (n === 4) { drop = dice.indexOf(Math.min(...dice)); total -= dice[drop]; }
+    return { dice, drop, total, nuevo: true };
+  }
+  function pool() {
+    const d = def();
+    if (d.tipo === 'array') return d.valores.map(v => ({ total: v }));
+    const D0 = D();
+    const n = activos().length;
+    if (D0.rolls.length > 0) while (D0.rolls.length < n) D0.rolls.push(tirar(d.dados));
+    return D0.rolls;
+  }
+
+  /* ===== Valor base de cada característica ===== */
+  function baseDe(k) {
+    if (def().tipo === 'puntos') return valP(P(), k);
+    if (def().tipo === 'array' && esExtra(k)) { const ev = D().ev || {}; return ev[k] === undefined ? 10 : num(ev[k]); }
+    const a = D().asig[k];
+    const pl = pool();
+    return (a !== undefined && a !== '' && pl[a]) ? pl[a].total : null;
+  }
+  const bonusDe = k => num(state.bonus[k]);
+
+  /* ===== Render ===== */
+  function renderMetodos() {
+    $('#metodos').innerHTML = Object.entries(METODOS).map(([k, m]) => `
+      <button type="button" class="metodo ${k === state.metodo ? 'activo' : ''}" data-metodo="${k}">
+        <strong>${m.nombre}</strong><span class="tag ${m.cls}">${m.tag}</span>
+      </button>`).join('');
+  }
+
+  function renderReglas() {
+    const d = def();
+    $('#rTitulo').textContent = d.nombre;
+    $('#rDesc').textContent = d.desc;
+    const editable = d.tipo === 'puntos' && d.edit;
+    $('#rParams').hidden = !editable;
+    if (editable) { const p = P(); $('#pMin').value = p.min; $('#pMax').value = p.max; $('#pPts').value = p.puntos; }
+    $('#rExtraWrap').hidden = !d.extra;
+    const rc = $('#rCoste');
+    rc.hidden = !d.tabla;
+    if (d.tabla) rc.innerHTML = Object.entries(COSTE).map(([v, c]) => `<span><b>${v}</b> → ${c} pts</span>`).join('');
+  }
+
+  function renderEstado() {
+    const d = def(), cont = $('#panelEstado');
+    if (d.tipo === 'puntos') {
+      const p = P(), g = gastado(p), resto = p.puntos - g;
+      const pct = p.puntos > 0 ? Math.min(100, g / p.puntos * 100) : 0;
+      cont.innerHTML = `
+        <div class="cifras"><span class="grande">${resto} <small style="font-size:14px;font-weight:600">puntos restantes</small></span>
+        <span class="msg ${resto === 0 ? 'ok' : 'aviso-t'}">${resto === 0 ? 'Todos los puntos repartidos' : 'Gastados ' + g + ' de ' + p.puntos}</span></div>
+        <div class="barra ${resto === 0 ? 'lleno' : ''}"><i style="width:${pct}%"></i></div>`;
+    } else if (d.tipo === 'dados') {
+      const pl = pool(), usados = Object.values(D().asig).filter(x => x !== '' && x !== undefined).map(Number);
+      cont.innerHTML = `
+        <div class="toolbar">
+          <button type="button" id="tirar">${pl.length ? 'Volver a tirar' : 'Tirar los dados'}</button>
+          <button type="button" id="extraDado" ${pl.length ? '' : 'disabled'}>Tirar dado extra</button>
+        </div>
+        ${pl.length ? `<div class="pool">${pl.map((r, i) => `
+          <div class="chip ${usados.includes(i) ? 'usado' : ''} ${r.nuevo ? 'nuevo' : ''}">
+            <b>${r.total}</b><small>${r.dice.map((x, j) => j === r.drop ? `<s>${x}</s>` : x).join(' · ')}</small></div>`).join('')}</div>`
+          : '<div class="leyenda" style="margin-top:10px">Pulsa para tirar los dados de todas las características a la vez.</div>'}`;
+      pl.forEach(r => delete r.nuevo);
+    } else {
+      const pl = pool(), usados = Object.values(D().asig).filter(x => x !== '' && x !== undefined).map(Number);
+      cont.innerHTML = `
+        <div class="pool">${pl.map((r, i) => `<div class="chip ${usados.includes(i) ? 'usado' : ''}"><b>${r.total}</b></div>`).join('')}</div>`;
+    }
+  }
+
+  const nombreHtml = (k, n) => `<strong>${esc(n)}${esExtra(k) ? `<button type="button" class="quitar" data-quitar="${k}" title="Quitar característica">×</button>` : ''}</strong>`;
+
+  function renderTabla() {
+    const d = def(), cont = $('#tabla');
+    $('#cabBase').textContent = d.tipo === 'puntos' ? 'Base (puntos)' : 'Base (valor asignado)';
+    if (d.tipo === 'puntos') {
+      const p = P(), resto = p.puntos - gastado(p);
+      cont.innerHTML = activos().map(([k, n]) => {
+        const v = valP(p, k);
+        const subir = v < p.max && (coste(p, v + 1) - coste(p, v)) <= resto;
+        const extra = d.tabla ? (v < 15 ? 'sube: ' + (coste(p, v + 1) - coste(p, v)) + ' pts' : 'máximo') : (v < p.max ? 'sube: 1 pt' : 'máximo');
+        return `<div class="fila">
+          ${nombreHtml(k, n)}
+          <div><div class="base">
+            <button type="button" data-dec="${k}" ${v <= p.min ? 'disabled' : ''}>−</button>
+            <input type="number" data-val="${k}" value="${v}" min="${p.min}" max="${p.max}">
+            <button type="button" data-inc="${k}" ${subir ? '' : 'disabled'}>+</button></div>
+            <div class="sub">coste ${coste(p, v)} · ${extra}</div></div>
+          <input type="number" data-bonus="${k}" value="${state.bonus[k] || ''}" placeholder="0">
+          <span class="final" data-final="${k}"></span><span class="mod" data-mod="${k}"></span></div>`;
+      }).join('');
+    } else {
+      const pl = pool(), asig = D().asig;
+      const usadoPor = i => Object.keys(asig).find(kk => String(asig[kk]) === String(i) && activos().some(([a]) => a === kk));
+      cont.innerHTML = activos().map(([k, n]) => `
+        <div class="fila">
+          ${nombreHtml(k, n)}
+          <div>${d.tipo === 'array' && esExtra(k) ? `<input type="number" data-ev="${k}" value="${baseDe(k)}" min="1" max="30">` : `<select data-asig="${k}" ${pl.length ? '' : 'disabled'}>
+            <option value="">${pl.length ? '— elegir —' : 'Primero tira los dados'}</option>
+            ${pl.map((r, i) => { const u = usadoPor(i); return (u && u !== k) ? '' : `<option value="${i}" ${String(asig[k]) === String(i) ? 'selected' : ''}>${r.total}${r.dice ? ' (' + r.dice.join(',') + ')' : ''}</option>`; }).join('')}
+          </select>`}</div>
+          <input type="number" data-bonus="${k}" value="${state.bonus[k] || ''}" placeholder="0">
+          <span class="final" data-final="${k}"></span><span class="mod" data-mod="${k}"></span></div>`).join('');
+    }
+    calc();
+  }
+
+  function calc() {
+    let sb = 0, sm = 0, completo = true;
+    activos().forEach(([k]) => {
+      const b = baseDe(k);
+      const f = $(`[data-final="${k}"]`), m = $(`[data-mod="${k}"]`);
+      if (b === null) { if (f) f.textContent = '—'; if (m) m.textContent = '—'; completo = false; return; }
+      const t = b + bonusDe(k);
+      if (f) f.textContent = t;
+      if (m) m.textContent = fmt(modDe(t));
+      sb += b; sm += modDe(t);
+    });
+    $('#sumBase').textContent = sb;
+    $('#sumMod').textContent = completo ? fmt(sm) : '—';
+  }
+
+  function renderAll() { renderMetodos(); renderReglas(); renderEstado(); renderTabla(); }
+
+  /* ===== Eventos ===== */
+  $('#metodos').addEventListener('click', e => {
+    const b = e.target.closest('[data-metodo]'); if (!b) return;
+    state.metodo = b.dataset.metodo; save(); renderAll();
+  });
+
+  function params() {
+    const p = P();
+    p.min = Math.max(1, Math.min(30, num($('#pMin').value) || 1));
+    p.max = Math.max(p.min, Math.min(30, num($('#pMax').value) || p.min));
+    p.puntos = Math.max(0, num($('#pPts').value));
+    activos().forEach(([k]) => { p.vals[k] = Math.min(p.max, Math.max(p.min, valP(p, k))); });
+    if (gastado(p) > p.puntos) p.vals = {};
+    save(); renderAll();
+  }
+  ['#pMin', '#pMax', '#pPts'].forEach(s => $(s).addEventListener('change', params));
+
+  function anadirExtra() {
+    const nombre = $('#extraNombre').value.trim();
+    if (!nombre) { $('#extraNombre').focus(); return; }
+    state.extras.push({ id: 'x' + Date.now(), nombre });
+    $('#extraNombre').value = '';
+    save(); renderAll();
+  }
+  $('#extraAdd').addEventListener('click', anadirExtra);
+  $('#extraNombre').addEventListener('keydown', e => { if (e.key === 'Enter') anadirExtra(); });
+
+  $('#tabla').addEventListener('click', e => {
+    const inc = e.target.closest('[data-inc]'), dec = e.target.closest('[data-dec]'), q = e.target.closest('[data-quitar]');
+    if (q) {
+      const id = q.dataset.quitar;
+      state.extras = state.extras.filter(x => x.id !== id);
+      delete state.bonus[id];
+      save(); renderAll(); return;
+    }
+    if (inc) { setVal(inc.dataset.inc, valP(P(), inc.dataset.inc) + 1); }
+    else if (dec) { setVal(dec.dataset.dec, valP(P(), dec.dataset.dec) - 1); }
+    else return;
+    save(); renderEstado(); renderTabla();
+  });
+  $('#tabla').addEventListener('change', e => {
+    const v = e.target.closest('[data-val]'), a = e.target.closest('[data-asig]'), ev = e.target.closest('[data-ev]');
+    if (v) { setVal(v.dataset.val, num(v.value)); }
+    else if (ev) { const D0 = D(); D0.ev = D0.ev || {}; D0.ev[ev.dataset.ev] = Math.max(1, Math.min(30, num(ev.value) || 10)); }
+    else if (a) { const D0 = D(); if (a.value === '') delete D0.asig[a.dataset.asig]; else D0.asig[a.dataset.asig] = a.value; }
+    else return;
+    save(); renderEstado(); renderTabla();
+  });
+  $('#tabla').addEventListener('input', e => {
+    const b = e.target.closest('[data-bonus]'); if (!b) return;
+    state.bonus[b.dataset.bonus] = b.value; save(); calc();
+  });
+
+  $('#panelEstado').addEventListener('click', e => {
+    if (e.target.closest('#tirar')) {
+      const D0 = D(), n = activos().length;
+      D0.rolls = Array.from({ length: n }, () => tirar(def().dados)); D0.asig = {};
+      save(); renderEstado(); renderTabla();
+    } else if (e.target.closest('#extraDado')) {
+      D().rolls.push(tirar(def().dados));
+      save(); renderEstado(); renderTabla();
+    }
+  });
+
+  $('#reiniciar').addEventListener('click', () => {
+    delete state.pts[state.metodo]; delete state.dados[state.metodo]; state.bonus = {};
+    save(); renderAll();
+  });
+
+  renderAll();
+})();
+</script>
+</body>
+</html>
