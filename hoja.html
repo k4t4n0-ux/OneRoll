@@ -89,6 +89,34 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
 .slot input[type=number]{height:28px;text-align:center;padding:0 4px}
 .cajas{display:flex;gap:4px;flex-wrap:wrap}
 
+/* Exportar / importar */
+.topbar{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.io-fondo{position:fixed;inset:0;background:rgba(30,40,55,.5);z-index:2000;display:flex;align-items:center;justify-content:center;padding:16px}
+.io-caja{background:#fff;border-radius:16px;padding:18px;width:100%;max-width:560px;max-height:92vh;overflow:auto;box-shadow:0 12px 40px rgba(0,0,0,.3)}
+.io-cab{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px}
+.io-cab h3{margin:0}
+.io-caja textarea{height:auto;min-height:90px;resize:vertical;overflow:auto;font-family:Consolas,monospace;font-size:11px;word-break:break-all}
+.io-caja hr{border:none;border-top:1px solid #e3eaf3;margin:16px 0}
+
+/* Contadores de usos en tarjetas */
+.contador{border-top:1px dashed #cbd8ea;padding-top:10px;display:flex;flex-direction:column;gap:10px}
+.cont-body{display:flex;flex-direction:column;gap:10px}
+.cont-cajas{display:flex;gap:6px;flex-wrap:wrap;align-items:center}
+.cont-cajas input{width:20px;height:20px}
+.cont-acciones{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.uso{font-size:11px;font-weight:700;background:#fff;border:1px solid #d9e6f5;border-radius:6px;padding:2px 7px;color:#3a4a5f}
+.uso:empty{display:none}
+.descansos{align-items:center}
+.descansos .leyenda{margin:0}
+
+/* Características personalizadas */
+.stat-head.custom{grid-template-columns:1fr 64px 44px 30px}
+.edit-stat{height:28px;width:30px;padding:0}
+.stat-form{border-top:1px solid #e3eaf3;margin-top:12px;padding-top:12px;display:flex;flex-direction:column;gap:10px}
+.ns-row{display:grid;grid-template-columns:1fr 34px;gap:8px;margin-bottom:6px}
+.ns-acciones{display:flex;gap:8px;flex-wrap:wrap}
+#addStat{margin-top:12px;width:100%}
+
 @media (max-width:1100px){
   .cabecera{grid-template-columns:1fr 1fr}
   .col-clases{grid-column:1/-1}
@@ -151,7 +179,23 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
 </script>
 <!-- ===== FIN CABECERA COMÚN ===== -->
 <div class="hoja">
-  <a class="volver" href="hojas.html">← Mis hojas</a>
+  <div class="topbar">
+    <a class="volver" href="hojas.html">← Mis hojas</a>
+    <button type="button" id="btnIO">⇅ Exportar / importar</button>
+  </div>
+  <div class="io-fondo" id="ioFondo" hidden>
+    <div class="io-caja" role="dialog" aria-label="Exportar o importar">
+      <div class="io-cab"><h3>Exportar / importar hoja</h3><button type="button" id="ioCerrar">✖</button></div>
+      <label>Exportar: copia este texto y pégalo en el otro dispositivo</label>
+      <textarea id="ioOut" readonly rows="4"></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioCopiar">Copiar texto</button><span class="leyenda" id="ioMsg" style="margin:0"></span></div>
+      <hr>
+      <label>Importar: pega aquí el texto exportado</label>
+      <textarea id="ioIn" rows="4" placeholder="DND55HOJA1:..."></textarea>
+      <div class="toolbar" style="margin:8px 0 0"><button type="button" id="ioImportar">Importar y reemplazar esta hoja</button></div>
+      <div class="leyenda" style="margin-top:8px">Al importar se sustituye todo lo de esta hoja por lo del texto. En el móvil crea antes una hoja nueva y haz la importación dentro de ella.</div>
+    </div>
+  </div>
   <h1 id="tituloHoja">Hoja de personaje</h1>
 
   <!-- CABECERA -->
@@ -227,6 +271,21 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
         <div class="leyenda">C = competencia · P = pericia (doble bonificador)</div>
         <div class="skill-row titulos"><span></span><span>C</span><span>P</span><span></span></div>
         <div id="stats"></div>
+        <button type="button" id="addStat">+ Nueva característica</button>
+        <div class="stat-form" id="statForm" hidden>
+          <div class="campo"><label>Nombre de la característica</label><input type="text" id="nsNombre" placeholder="Suerte, Honor, Cordura…"></div>
+          <div class="campo">
+            <label>Habilidades</label>
+            <div id="nsSkills"></div>
+            <button type="button" id="nsAddSkill">+ Habilidad</button>
+          </div>
+          <div class="leyenda">Añade aquí todas las habilidades. Una vez creada, la característica se ve como las demás, sin botones de borrar; para cambiarla usa el botón ✎ de su cabecera.</div>
+          <div class="ns-acciones">
+            <button type="button" id="nsGuardar">Crear característica</button>
+            <button type="button" id="nsCancelar">Cancelar</button>
+            <button type="button" class="del" id="nsEliminar" style="width:auto;padding:0 12px" hidden>Eliminar característica</button>
+          </div>
+        </div>
       </section>
 
       <section class="panel">
@@ -247,6 +306,11 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
     </div>
 
     <div class="col-der">
+      <div class="toolbar descansos">
+        <button type="button" id="descCorto">☀ Descanso corto</button>
+        <button type="button" id="descLargo">🌙 Descanso largo</button>
+        <span class="leyenda">Recuperan los contadores de usos de Especie, Dotes y Clase</span>
+      </div>
       <div class="tabs">
         <button type="button" data-tab="ataques">Ataques</button>
         <button type="button" data-tab="especie">Especie</button>
@@ -292,425 +356,4 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
         <div class="panel">
           <div class="toolbar"><button type="button" id="addRasgo">+ Añadir rasgo de clase</button></div>
           <div class="lista" id="listaRasgos"></div>
-        </div>
-      </div>
-
-      <div class="seccion" data-tab="conjuros">
-        <div class="panel">
-          <h3>Espacios de conjuro</h3>
-          <div class="leyenda">Pon cuántos tienes de cada nivel y marca los que ya has gastado.</div>
-          <div class="slots" id="slots"></div>
-          <div class="toolbar"><button type="button" id="resetSlots">Descanso largo (recuperar todos)</button></div>
-        </div>
-        <div class="panel">
-          <h3>Conjuros</h3>
-          <div class="toolbar"><button type="button" id="addConjuro">+ Añadir conjuro</button></div>
-          <div class="lista" id="listaConjuros"></div>
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<script>
-(() => {
-  /* ============ ID DE LA HOJA ============ */
-  const params = new URLSearchParams(location.search);
-  const id = params.get('id');
-  if (!id) { location.replace('index.html'); return; }
-  const KEY = 'dnd55_hoja_' + id;
-  const IDX = 'dnd55_indice';
-
-  /* ============ UTILIDADES ============ */
-  const $ = (s, r = document) => r.querySelector(s);
-  const $$ = (s, r = document) => [...r.querySelectorAll(s)];
-  const num = v => parseInt(v) || 0;
-  const fmt = n => n >= 0 ? '+' + n : String(n);
-  const getEl = e => e.type === 'checkbox' ? e.checked : e.value;
-  const setEl = (e, v) => { if (e.type === 'checkbox') e.checked = !!v; else e.value = v; };
-  const out = (name, t) => $$(`[data-out="${name}"]`).forEach(e => e.textContent = t);
-
-  const ABIL = [['fue','Fuerza'],['des','Destreza'],['con','Constitución'],['int','Inteligencia'],['sab','Sabiduría'],['car','Carisma']];
-  const ABIL_CAST = [['int','Inteligencia'],['sab','Sabiduría'],['car','Carisma'],['con','Constitución'],['fue','Fuerza'],['des','Destreza']];
-  const SKILLS = {
-    fue: [['atl','Atletismo']],
-    des: [['acr','Acrobacias'],['jdm','Juego de manos'],['sig','Sigilo']],
-    con: [],
-    int: [['arc','Arcanos'],['his','Historia'],['inv','Investigación'],['nat','Naturaleza'],['rel','Religión']],
-    sab: [['tan','Trato con animales'],['med','Medicina'],['pcp','Percepción'],['psp','Perspicacia'],['sup','Supervivencia']],
-    car: [['eng','Engaño'],['itp','Interpretación'],['itm','Intimidación'],['prs','Persuasión']]
-  };
-  const ESCUELAS = ['Abjuración','Adivinación','Conjuración','Encantamiento','Evocación','Ilusión','Nigromancia','Transmutación'];
-
-  /* ============ ESTADO Y GUARDADO ============ */
-  const defState = () => ({
-    f: {},
-    clases: [{ clase: '', sub: '', nivel: '1' }],
-    ataques: [], especie: [], dotes: [], rasgos: [], conjuros: [],
-    slots: Array.from({ length: 9 }, () => ({ max: 0, used: 0 })),
-    tab: 'ataques'
-  });
-  let state = defState();
-  try {
-    const raw = localStorage.getItem(KEY);
-    if (raw) state = Object.assign(defState(), JSON.parse(raw));
-  } catch (e) { console.error(e); }
-
-  function ensureIndex() {
-    try {
-      const a = JSON.parse(localStorage.getItem(IDX) || '[]');
-      if (!a.includes(id)) { a.push(id); localStorage.setItem(IDX, JSON.stringify(a)); }
-    } catch (e) {}
-  }
-  let timer;
-  function flush() {
-    try { localStorage.setItem(KEY, JSON.stringify(state)); ensureIndex(); } catch (e) { console.error(e); }
-  }
-  function save() { clearTimeout(timer); timer = setTimeout(flush, 250); }
-  addEventListener('beforeunload', flush);
-
-  /* ============ CÁLCULOS BASE ============ */
-  const statVal = k => { const v = parseInt(state.f['stat_' + k]); return isNaN(v) ? 10 : v; };
-  const mod = k => Math.floor((statVal(k) - 10) / 2);
-  const nivelTotal = () => state.clases.reduce((s, c) => s + num(c.nivel), 0);
-  const prof = () => { const n = nivelTotal(); return n <= 0 ? 2 : Math.ceil(n / 4) + 1; };
-  const skillTotal = (a, s) => mod(a) + (state.f['p_' + s] ? prof() * 2 : state.f['c_' + s] ? prof() : 0);
-
-  const cardCalcs = new Set();
-
-  function recalc() {
-    const p = prof();
-    out('nivelTotal', String(nivelTotal()));
-    out('prof', '+' + p);
-    ABIL.forEach(([k]) => {
-      out('mod_' + k, fmt(mod(k)));
-      out('sv_' + k, fmt(mod(k) + (state.f['sv_' + k] ? p : 0)));
-      SKILLS[k].forEach(([s]) => out('sk_' + s, fmt(skillTotal(k, s))));
-    });
-    out('iniciativa', fmt(mod('des') + num(state.f.bonIni)));
-    out('pasiva', String(10 + skillTotal('sab', 'pcp')));
-    cardCalcs.forEach(fn => fn());
-  }
-
-  function titulo() {
-    const n = state.f.nombre || 'Personaje sin nombre';
-    $('#tituloHoja').textContent = n;
-    document.title = n + ' · Hoja de personaje';
-  }
-
-  /* ============ TABLA DE CARACTERÍSTICAS ============ */
-  function buildStats() {
-    const cont = $('#stats');
-    cont.innerHTML = ABIL.map(([k, n]) => `
-      <div class="stat-block">
-        <div class="stat-head">
-          <strong>${n}</strong>
-          <input type="number" min="1" max="30" value="10" data-k="stat_${k}">
-          <span class="mod" data-out="mod_${k}">+0</span>
-        </div>
-        <div class="skill-row sv">
-          <span>Salvación</span>
-          <input type="checkbox" data-k="sv_${k}" title="Competencia en la salvación"><span></span>
-          <b data-out="sv_${k}">+0</b>
-        </div>
-        ${SKILLS[k].map(([s, sn]) => `
-          <div class="skill-row">
-            <span>${sn}</span>
-            <input type="checkbox" data-k="c_${s}" title="Competencia">
-            <input type="checkbox" data-k="p_${s}" title="Pericia">
-            <b data-out="sk_${s}">+0</b>
-          </div>`).join('')}
-      </div>`).join('');
-  }
-
-  function buildPG() {
-    const defs = [['pgMax','PG máximos','max'],['pgAct','PG actuales','act'],['pgTmp','PG temporales','tmp']];
-    $('#pgBloques').innerHTML = defs.map(([k, l, w]) => `
-      <div class="pg">
-        <label>${l}</label>
-        <input type="number" min="0" value="0" data-k="${k}">
-        <div class="pg-botones">
-          ${[-10,-1,1,10].map(d => `<button type="button" data-pg="${w}" data-d="${d}">${d > 0 ? '+' : ''}${d}</button>`).join('')}
-        </div>
-      </div>`).join('');
-  }
-
-  /* ============ CAMPOS ESTÁTICOS (data-k) ============ */
-  function setF(k, v) {
-    state.f[k] = String(v);
-    $$(`[data-k="${k}"]`).forEach(o => setEl(o, v));
-    save();
-  }
-
-  function bindStatic() {
-    $$('[data-k]').forEach(el => {
-      const k = el.dataset.k;
-      if (state.f[k] !== undefined) setEl(el, state.f[k]); else state.f[k] = getEl(el);
-      el.addEventListener('input', () => {
-        state.f[k] = getEl(el);
-        $$(`[data-k="${k}"]`).forEach(o => { if (o !== el) setEl(o, state.f[k]); });
-        if (k === 'nombre') titulo();
-        recalc(); save();
-      });
-    });
-
-    $$('[data-pg]').forEach(b => b.addEventListener('click', () => {
-      const w = b.dataset.pg, d = num(b.dataset.d);
-      let max = num(state.f.pgMax), act = num(state.f.pgAct), tmp = num(state.f.pgTmp);
-      if (w === 'max') { max = Math.max(0, max + d); if (act > max) act = max; }
-      if (w === 'act') { act = Math.min(max, Math.max(0, act + d)); }
-      if (w === 'tmp') { tmp = Math.max(0, tmp + d); }
-      setF('pgMax', max); setF('pgAct', act); setF('pgTmp', tmp);
-    }));
-
-    const clampPG = () => {
-      const max = Math.max(0, num(state.f.pgMax));
-      if (num(state.f.pgMax) !== max) setF('pgMax', max);
-      const act = Math.min(max, Math.max(0, num(state.f.pgAct)));
-      if (num(state.f.pgAct) !== act) setF('pgAct', act);
-      if (num(state.f.pgTmp) < 0) setF('pgTmp', 0);
-    };
-    $('[data-k="pgMax"]').addEventListener('change', clampPG);
-    $('[data-k="pgAct"]').addEventListener('change', clampPG);
-    $('[data-k="pgTmp"]').addEventListener('change', clampPG);
-  }
-
-  /* ============ CLASES / MULTICLASE ============ */
-  function renderClases() {
-    const box = $('#listaClases');
-    box.innerHTML = '';
-    state.clases.forEach((c, i) => {
-      const row = document.createElement('div');
-      row.className = 'clase-row';
-      row.innerHTML = `
-        <input type="text" list="dlClases" placeholder="${i ? 'Clase secundaria' : 'Clase'}" data-c="clase">
-        <input type="text" placeholder="Subclase" data-c="sub">
-        <input type="number" min="0" max="30" placeholder="Nv" data-c="nivel">
-        ${i ? '<button type="button" class="del" title="Quitar clase">✖</button>' : '<span></span>'}`;
-      $$('[data-c]', row).forEach(inp => {
-        inp.value = c[inp.dataset.c] || '';
-        inp.addEventListener('input', () => { c[inp.dataset.c] = inp.value; recalc(); save(); });
-      });
-      const d = $('.del', row);
-      if (d) d.addEventListener('click', () => { state.clases.splice(i, 1); renderClases(); recalc(); save(); });
-      box.appendChild(row);
-    });
-  }
-
-  /* ============ TARJETAS ============ */
-  const I = (f, l, ph = '', t = 'text') => `<div class="campo"><label>${l}</label><input type="${t}" data-f="${f}" placeholder="${ph}"></div>`;
-  const S = (f, l, opts) => `<div class="campo"><label>${l}</label><select data-f="${f}">${opts.map(o => Array.isArray(o) ? `<option value="${o[0]}">${o[1]}</option>` : `<option>${o}</option>`).join('')}</select></div>`;
-  const T = (f, l, ph = '') => `<div class="campo ancho"><label>${l}</label><textarea class="autoResize" rows="2" data-f="${f}" placeholder="${ph}"></textarea></div>`;
-  const C = (f, l) => `<label class="check"><input type="checkbox" data-f="${f}"> ${l}</label>`;
-  const set = (el, name, t) => { const n = $(`[data-o="${name}"]`, el); if (n) n.textContent = t; };
-
-  const calcArma = (i, el) => {
-    const m = mod(i.stat || 'fue'), ex = num(i.extra);
-    set(el, 'atk', fmt(m + (i.comp ? prof() : 0) + ex));
-    set(el, 'dmg', `${i.dado || '—'} ${fmt(m + ex)} ${i.tipodano || ''}`.trim());
-  };
-  const calcConjuro = (i, el) => {
-    const m = mod(i.stat || 'int');
-    let t = '';
-    if (i.tipo === 'salvacion') t = `CD ${8 + prof() + m}`;
-    else if (i.tipo === 'ataque') t = `Ataque ${fmt(prof() + m)}`;
-    set(el, 'res', t);
-  };
-  const spellBody = conNivel => `
-    <div class="rejilla">
-      ${conNivel ? S('nivel', 'Nivel', [['0','Truco'],...Array.from({length: 9}, (_, k) => [String(k + 1), 'Nivel ' + (k + 1)])]) : ''}
-      ${I('nombre', 'Nombre')}
-      ${S('tipo', 'Tipo', [['ninguno','Sin tirada'],['salvacion','Tirada de salvación'],['ataque','Tirada de ataque']])}
-      ${S('stat', 'Característica', ABIL_CAST)}
-      ${S('escuela', 'Escuela', ESCUELAS)}
-      ${I('distancia', 'Distancia', '60 pies')}
-      ${I('comps', 'Componentes', 'V, S, M')}
-      ${I('tiempo', 'Tiempo de lanzamiento', 'Acción')}
-      ${I('dur', 'Duración', 'Instantáneo')}
-    </div>
-    <div class="resultado"><b data-o="res"></b></div>
-    ${T('efecto', 'Efecto')}`;
-
-  const DEFS = {
-    arma: {
-      tag: 'Arma', ph: 'Arma sin nombre',
-      body: `<div class="rejilla">
-        ${I('nombre', 'Nombre', 'Espada larga')}
-        ${S('cat', 'Categoría', ['Simple','Marcial','Otra / homebrew'])}
-        ${I('dado', 'Dado', '1d8')}
-        ${I('tipodano', 'Tipo de daño', 'Cortante')}
-        ${I('props', 'Características', 'Versátil (1d10), alcance…')}
-        ${I('maestria', 'Maestría', 'Sap')}
-        ${S('stat', 'Característica', ABIL)}
-        ${I('extra', 'Bonif. extra (mágico…)', '0', 'number')}
-      </div>
-      ${C('comp', 'Competente')}
-      <div class="resultado">Ataque <b data-o="atk">+0</b> · Daño <b data-o="dmg">—</b></div>
-      ${T('notas', 'Notas')}`,
-      calc: calcArma
-    },
-    desarmado: {
-      tag: 'Desarmado', ph: 'Ataque desarmado',
-      body: `<div class="rejilla">
-        ${I('nombre', 'Nombre', 'Golpe desarmado')}
-        ${I('dado', 'Dado', '1')}
-        ${I('tipodano', 'Tipo de daño', 'Contundente')}
-        ${S('stat', 'Característica', ABIL)}
-        ${I('extra', 'Bonif. extra', '0', 'number')}
-      </div>
-      ${C('comp', 'Competente')}
-      <div class="resultado">Ataque <b data-o="atk">+0</b> · Daño <b data-o="dmg">—</b></div>
-      ${T('notas', 'Notas')}`,
-      calc: calcArma
-    },
-    truco: { tag: 'Truco', ph: 'Truco sin nombre', body: spellBody(false), calc: calcConjuro },
-    conjuros: {
-      tag: i => num(i.nivel) === 0 ? 'Truco' : 'Nv ' + i.nivel,
-      ph: 'Conjuro sin nombre', body: spellBody(true), calc: calcConjuro
-    },
-    especie: {
-      tag: '', ph: 'Habilidad sin nombre',
-      body: `${I('nombre', 'Nombre')}${T('desc', 'Descripción')}`
-    },
-    dotes: {
-      tag: i => i.tipo || '', ph: 'Dote sin nombre',
-      body: `<div class="rejilla">${I('nombre', 'Nombre')}${S('tipo', 'Tipo de dote', ['Origen','General','Estilo de lucha','Bendición épica','Homebrew / otro'])}</div>${T('desc', 'Descripción')}`
-    },
-    rasgos: {
-      tag: i => i.nivel ? 'Nv ' + i.nivel : '', ph: 'Rasgo sin nombre',
-      body: `<div class="rejilla">${I('nombre', 'Nombre')}${I('clase', 'Clase')}${I('nivel', 'Nivel', '', 'number')}</div>${T('desc', 'Descripción')}`
-    }
-  };
-  const LISTS = { ataques: '#listaAtaques', especie: '#listaEspecie', dotes: '#listaDotes', rasgos: '#listaRasgos', conjuros: '#listaConjuros' };
-  const defFor = (list, item) => list === 'ataques' ? DEFS[item.kind] : DEFS[list];
-
-  function autosize(t) { t.style.height = 'auto'; if (t.scrollHeight) t.style.height = t.scrollHeight + 'px'; }
-  const resizeAll = r => $$('textarea.autoResize', r).forEach(autosize);
-  document.addEventListener('input', e => { if (e.target.matches && e.target.matches('textarea.autoResize')) autosize(e.target); });
-
-  function renderCard(list, item, container) {
-    const d = defFor(list, item);
-    const el = document.createElement('div');
-    el.className = 'card';
-    el.innerHTML = `
-      <div class="card-head">
-        <button type="button" class="tog"></button>
-        <span class="tag"></span><span class="nombre"></span>
-        <button type="button" class="del" title="Eliminar">✖</button>
-      </div>
-      <div class="card-body">${d.body}</div>`;
-    const body = $('.card-body', el), tog = $('.tog', el);
-
-    const upd = () => {
-      $('.tag', el).textContent = typeof d.tag === 'function' ? d.tag(item) : d.tag;
-      $('.nombre', el).textContent = item.nombre || d.ph;
-      if (d.calc) d.calc(item, el);
-    };
-
-    $$('[data-f]', el).forEach(inp => {
-      const f = inp.dataset.f;
-      if (item[f] !== undefined) setEl(inp, item[f]); else item[f] = getEl(inp);
-      inp.addEventListener('input', () => { item[f] = getEl(inp); upd(); save(); });
-    });
-
-    const showState = () => {
-      body.hidden = !item.open;
-      tog.textContent = item.open ? '▲' : '▼';
-      if (item.open) resizeAll(body);
-    };
-    $('.card-head', el).addEventListener('click', e => {
-      if (e.target.closest('.del')) return;
-      item.open = !item.open; showState(); save();
-    });
-    $('.del', el).addEventListener('click', () => {
-      if (!confirm('¿Eliminar "' + (item.nombre || d.ph) + '"?')) return;
-      state[list] = state[list].filter(x => x !== item);
-      cardCalcs.delete(upd); el.remove(); save();
-    });
-
-    cardCalcs.add(upd);
-    container.appendChild(el);
-    showState(); upd();
-  }
-
-  function addItem(list, item) {
-    item.open = true;
-    state[list].push(item);
-    renderCard(list, item, $(LISTS[list]));
-    recalc(); save();
-  }
-  function renderAll() {
-    cardCalcs.clear();
-    Object.keys(LISTS).forEach(list => {
-      const c = $(LISTS[list]); c.innerHTML = '';
-      state[list].forEach(item => renderCard(list, item, c));
-    });
-  }
-
-  /* ============ ESPACIOS DE CONJURO ============ */
-  function renderSlots() {
-    const box = $('#slots'); box.innerHTML = '';
-    state.slots.forEach((s, i) => {
-      const r = document.createElement('div');
-      r.className = 'slot';
-      r.innerHTML = `<span>Nv ${i + 1}</span><input type="number" min="0" max="12" value="${s.max}"><div class="cajas"></div>`;
-      const cajas = $('.cajas', r), inp = $('input', r);
-      const draw = () => {
-        cajas.innerHTML = '';
-        for (let j = 0; j < s.max; j++) {
-          const b = document.createElement('input');
-          b.type = 'checkbox'; b.checked = j < s.used; b.title = 'Gastado';
-          b.addEventListener('change', () => { s.used = b.checked ? j + 1 : j; draw(); save(); });
-          cajas.appendChild(b);
-        }
-      };
-      inp.addEventListener('input', () => {
-        s.max = Math.min(12, Math.max(0, num(inp.value)));
-        s.used = Math.min(s.used, s.max);
-        draw(); save();
-      });
-      draw();
-      box.appendChild(r);
-    });
-  }
-
-  /* ============ PESTAÑAS ============ */
-  function setTab(n) {
-    state.tab = n;
-    $$('.tabs button').forEach(b => b.classList.toggle('activo', b.dataset.tab === n));
-    $$('.seccion').forEach(s => {
-      const on = s.dataset.tab === n;
-      s.classList.toggle('activa', on);
-      if (on) resizeAll(s);
-    });
-    save();
-  }
-
-  /* ============ INICIO ============ */
-  buildStats();
-  buildPG();
-  bindStatic();
-  renderClases();
-  renderAll();
-  renderSlots();
-
-  $('#addClase').addEventListener('click', () => { state.clases.push({ clase: '', sub: '', nivel: '0' }); renderClases(); recalc(); save(); });
-  $('#addArma').addEventListener('click', () => addItem('ataques', { kind: 'arma' }));
-  $('#addDesarmado').addEventListener('click', () => addItem('ataques', { kind: 'desarmado' }));
-  $('#addTruco').addEventListener('click', () => addItem('ataques', { kind: 'truco' }));
-  $('#addEspecie').addEventListener('click', () => addItem('especie', {}));
-  $('#addDote').addEventListener('click', () => addItem('dotes', {}));
-  $('#addRasgo').addEventListener('click', () => addItem('rasgos', {}));
-  $('#addConjuro').addEventListener('click', () => addItem('conjuros', {}));
-  $('#resetSlots').addEventListener('click', () => { state.slots.forEach(s => s.used = 0); renderSlots(); save(); });
-  $$('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
-
-  titulo();
-  recalc();
-  setTab(state.tab || 'ataques');
-  resizeAll(document);
-  flush();
-})();
-</script>
-</body>
-</html>
+    
