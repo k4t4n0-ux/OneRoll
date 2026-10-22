@@ -188,8 +188,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
   /* extra: true = permite añadir características nuevas */
   const METODOS = {
-    oficial: { nombre: 'Compra de 27 puntos', tag: 'Oficial', cls: '', tipo: 'puntos', min: 8, max: 15, puntos: 27, tabla: true, edit: false, extra: true,
-      desc: 'Regla oficial. Todas las características empiezan en 8 y compras subidas hasta 15 con una tabla de costes: de 8 a 13 cada punto cuesta 1, y 14 y 15 cuestan 2 puntos cada uno.' },
+    oficial: { nombre: 'Compra de 27 puntos', tag: 'Oficial', cls: '', tipo: 'puntos', min: 8, max: 15, puntos: 27, tabla: true, edit: 'puntos', extra: true,
+      desc: 'Regla oficial. Todas las características empiezan en 8 y compras subidas hasta 15 con una tabla de costes: de 8 a 13 cada punto cuesta 1, y 14 y 15 cuestan 2 puntos cada uno. Son 27 puntos por defecto; si añades características nuevas puedes cambiar los puntos a repartir.' },
     libre27: { nombre: 'Puntos libres', tag: 'No oficial', cls: 'no', tipo: 'puntos', min: 8, max: 15, puntos: 27, tabla: false, edit: true, extra: true,
       desc: 'Variante de mesa: puntos a repartir sin tabla de costes. Cada punto sube 1 la característica, también de 14 a 15. Mínimo y máximo editables.' },
     d4d6: { nombre: 'Dados: 4d6', tag: 'Clásico', cls: '', tipo: 'dados', dados: 4, extra: true,
@@ -197,7 +197,7 @@ button:disabled{opacity:.4;cursor:not-allowed}
     d3d6: { nombre: 'Dados: 3d6', tag: 'Clásico', cls: '', tipo: 'dados', dados: 3, extra: true,
       desc: 'Tiras 3d6 y sumas, una vez por característica. Después asignas cada resultado a la característica que quieras.' },
     array: { nombre: 'Conjunto estándar', tag: 'Oficial', cls: '', tipo: 'array', valores: [15, 14, 13, 12, 10, 8], extra: true,
-      desc: 'Regla oficial: los valores 15, 14, 13, 12, 10 y 8 se asignan a las características como quieras.' }
+      desc: 'Regla oficial: los valores 15, 14, 13, 12, 10 y 8 se asignan a las características como quieras. Cada característica nueva que añadas suma otro valor siguiendo la misma lista (una nueva: 15; dos: 15 y 14; y así hasta el 8; con siete nuevas vuelve a empezar por otro 15).' }
   };
 
   /* ===== Estado ===== */
@@ -244,7 +244,11 @@ button:disabled{opacity:.4;cursor:not-allowed}
   }
   function pool() {
     const d = def();
-    if (d.tipo === 'array') return d.valores.map(v => ({ total: v }));
+    if (d.tipo === 'array') {
+      // Cada característica extra añade el siguiente valor de la lista (15, 14, 13, 12, 10, 8 y vuelta a empezar)
+      const v = d.valores, e = d.extra ? state.extras.length : 0;
+      return v.concat(Array.from({ length: e }, (_, i) => v[i % v.length])).map(t => ({ total: t }));
+    }
     const D0 = D();
     const n = activos().length;
     if (D0.rolls.length > 0) while (D0.rolls.length < n) D0.rolls.push(tirar(d.dados));
@@ -254,7 +258,6 @@ button:disabled{opacity:.4;cursor:not-allowed}
   /* ===== Valor base de cada característica ===== */
   function baseDe(k) {
     if (def().tipo === 'puntos') return valP(P(), k);
-    if (def().tipo === 'array' && esExtra(k)) { const ev = D().ev || {}; return ev[k] === undefined ? 10 : num(ev[k]); }
     const a = D().asig[k];
     const pl = pool();
     return (a !== undefined && a !== '' && pl[a]) ? pl[a].total : null;
@@ -275,6 +278,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
     $('#rDesc').textContent = d.desc;
     const editable = d.tipo === 'puntos' && d.edit;
     $('#rParams').hidden = !editable;
+    // En la compra oficial solo se pueden cambiar los puntos: el rango 8-15 lo marca la tabla de costes
+    const soloPuntos = d.edit === 'puntos';
+    $('#pMin').parentElement.hidden = soloPuntos;
+    $('#pMax').parentElement.hidden = soloPuntos;
     if (editable) { const p = P(); $('#pMin').value = p.min; $('#pMax').value = p.max; $('#pPts').value = p.puntos; }
     $('#rExtraWrap').hidden = !d.extra;
     const rc = $('#rCoste');
@@ -337,10 +344,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
       cont.innerHTML = activos().map(([k, n]) => `
         <div class="fila">
           ${nombreHtml(k, n)}
-          <div>${d.tipo === 'array' && esExtra(k) ? `<input type="number" data-ev="${k}" value="${baseDe(k)}" min="1" max="30">` : `<select data-asig="${k}" ${pl.length ? '' : 'disabled'}>
+          <div><select data-asig="${k}" ${pl.length ? '' : 'disabled'}>
             <option value="">${pl.length ? '— elegir —' : 'Primero tira los dados'}</option>
             ${pl.map((r, i) => { const u = usadoPor(i); return (u && u !== k) ? '' : `<option value="${i}" ${String(asig[k]) === String(i) ? 'selected' : ''}>${r.total}${r.dice ? ' (' + r.dice.join(',') + ')' : ''}</option>`; }).join('')}
-          </select>`}</div>
+          </select></div>
           <input type="number" data-bonus="${k}" value="${state.bonus[k] || ''}" placeholder="0">
           <span class="final" data-final="${k}"></span><span class="mod" data-mod="${k}"></span></div>`).join('');
     }
@@ -362,7 +369,14 @@ button:disabled{opacity:.4;cursor:not-allowed}
     $('#sumMod').textContent = completo ? fmt(sm) : '—';
   }
 
-  function renderAll() { renderMetodos(); renderReglas(); renderEstado(); renderTabla(); }
+  /* Quita asignaciones que ya no valen (característica quitada o valor que ya no existe en la lista) */
+  function sanear() {
+    if (def().tipo === 'puntos') return;
+    const D0 = D(), n = pool().length, ids = new Set(activos().map(([k]) => k));
+    Object.keys(D0.asig).forEach(k => { if (!ids.has(k) || (D0.asig[k] !== '' && num(D0.asig[k]) >= n)) delete D0.asig[k]; });
+  }
+
+  function renderAll() { sanear(); renderMetodos(); renderReglas(); renderEstado(); renderTabla(); }
 
   /* ===== Eventos ===== */
   $('#metodos').addEventListener('click', e => {
@@ -372,8 +386,10 @@ button:disabled{opacity:.4;cursor:not-allowed}
 
   function params() {
     const p = P();
-    p.min = Math.max(1, Math.min(30, num($('#pMin').value) || 1));
-    p.max = Math.max(p.min, Math.min(30, num($('#pMax').value) || p.min));
+    if (def().edit !== 'puntos') {
+      p.min = Math.max(1, Math.min(30, num($('#pMin').value) || 1));
+      p.max = Math.max(p.min, Math.min(30, num($('#pMax').value) || p.min));
+    }
     p.puntos = Math.max(0, num($('#pPts').value));
     activos().forEach(([k]) => { p.vals[k] = Math.min(p.max, Math.max(p.min, valP(p, k))); });
     if (gastado(p) > p.puntos) p.vals = {};
@@ -405,9 +421,8 @@ button:disabled{opacity:.4;cursor:not-allowed}
     save(); renderEstado(); renderTabla();
   });
   $('#tabla').addEventListener('change', e => {
-    const v = e.target.closest('[data-val]'), a = e.target.closest('[data-asig]'), ev = e.target.closest('[data-ev]');
+    const v = e.target.closest('[data-val]'), a = e.target.closest('[data-asig]');
     if (v) { setVal(v.dataset.val, num(v.value)); }
-    else if (ev) { const D0 = D(); D0.ev = D0.ev || {}; D0.ev[ev.dataset.ev] = Math.max(1, Math.min(30, num(ev.value) || 10)); }
     else if (a) { const D0 = D(); if (a.value === '') delete D0.asig[a.dataset.asig]; else D0.asig[a.dataset.asig] = a.value; }
     else return;
     save(); renderEstado(); renderTabla();
