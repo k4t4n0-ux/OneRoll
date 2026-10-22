@@ -309,7 +309,7 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
       <div class="toolbar descansos">
         <button type="button" id="descCorto">☀ Descanso corto</button>
         <button type="button" id="descLargo">🌙 Descanso largo</button>
-        <span class="leyenda">Recuperan los contadores de usos de Especie, Dotes y Clase</span>
+        <span class="leyenda">Corto: contadores de descanso corto. Largo: todos los contadores, espacios de conjuro y PG al máximo.</span>
       </div>
       <div class="tabs">
         <button type="button" data-tab="ataques">Ataques</button>
@@ -362,9 +362,8 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
       <div class="seccion" data-tab="conjuros">
         <div class="panel">
           <h3>Espacios de conjuro</h3>
-          <div class="leyenda">Pon cuántos tienes de cada nivel y marca los que ya has gastado.</div>
+          <div class="leyenda">Pon cuántos tienes de cada nivel y marca los que ya has gastado. Se recuperan con el botón «Descanso largo» de arriba.</div>
           <div class="slots" id="slots"></div>
-          <div class="toolbar"><button type="button" id="resetSlots">Descanso largo (recuperar todos)</button></div>
         </div>
         <div class="panel">
           <h3>Conjuros</h3>
@@ -825,7 +824,6 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
   $('#addDote').addEventListener('click', () => addItem('dotes', {}));
   $('#addRasgo').addEventListener('click', () => addItem('rasgos', {}));
   $('#addConjuro').addEventListener('click', () => addItem('conjuros', {}));
-  $('#resetSlots').addEventListener('click', () => { state.slots.forEach(s => s.used = 0); renderSlots(); save(); });
   $$('.tabs button').forEach(b => b.addEventListener('click', () => setTab(b.dataset.tab)));
 
   /* ---- Exportar / importar como texto ---- */
@@ -871,6 +869,11 @@ button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
     CONT_LISTS.forEach(l => state[l].forEach(it => {
       if (it.cOn && (it.cRec === 'corto' || (largo && (it.cRec === 'largo' || !it.cRec)))) it.cUsed = 0;
     }));
+    if (largo) {
+      state.slots.forEach(s => { s.used = 0; });   // espacios de conjuro
+      renderSlots();
+      setF('pgAct', Math.max(0, num(state.f.pgMax))); // PG actuales = PG máximos
+    }
     renderAll(); resizeAll(document); save();
   }
   $('#descCorto').addEventListener('click', () => descanso(false));
