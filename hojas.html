@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hojas de personaje · OneRoll</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+body{background:#f3f6fb;color:#2c3440;padding:32px 16px}
+.wrap{max-width:640px;margin:auto}
+h1{text-align:center;font-size:26px;font-weight:600;letter-spacing:1px;color:#3a4a5f;margin-bottom:24px}
+.panel{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:20px;box-shadow:0 3px 10px rgba(0,0,0,.04)}
+button{height:36px;padding:0 14px;border-radius:8px;border:1px solid #cbd8ea;background:#e4edf7;font-size:13px;font-weight:600;cursor:pointer;transition:.2s}
+button:hover{background:#7a9cc6;color:#fff;border-color:#7a9cc6}
+.crear{width:100%;height:46px;font-size:15px;margin-bottom:18px}
+.lista{display:flex;flex-direction:column;gap:10px}
+.fila{display:flex;gap:8px}
+.entrar{flex:1;display:flex;flex-direction:column;align-items:flex-start;justify-content:center;gap:2px;text-align:left;min-height:52px;padding:8px 16px;text-decoration:none;color:#2c3440;background:#f8fbff;border:1px solid #d9e6f5;border-radius:12px;transition:.2s}
+.entrar:hover{background:#e4edf7}
+.entrar strong{font-size:15px}
+.entrar small{font-size:12px;color:#5b6572}
+.borrar{height:auto;width:46px;background:#ffe5e5;border-color:#ffb5b5}
+.borrar:hover{background:#ff6b6b;border-color:#ff6b6b;color:#fff}
+.vacio{text-align:center;color:#5b6572;font-size:14px;padding:12px}
+</style>
+</head>
+<body>
+<!-- ===== CABECERA COMÚN (pegar justo después de <body>) ===== -->
+<style>
+#dnd-nav,#dnd-nav *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+#dnd-nav{position:fixed;top:0;left:0;right:0;height:48px;z-index:1000;background:#3a4a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#dnd-nav a.dnd-logo{color:#fff;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:1px}
+#dnd-nav #dnd-nav-btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+#dnd-nav #dnd-nav-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.6)}
+#dnd-nav #dnd-menu{position:absolute;top:52px;right:16px;min-width:200px;background:#fff;border:1px solid #d9e2ec;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column}
+#dnd-nav #dnd-menu[hidden]{display:none}
+#dnd-nav #dnd-menu a{display:block;padding:10px 12px;border-radius:8px;color:#2c3440;text-decoration:none;font-size:14px;font-weight:600}
+#dnd-nav #dnd-menu a:hover{background:#e4edf7}
+#dnd-nav #dnd-menu a.actual{background:#444;color:#fff}
+#dnd-nav-spacer{height:48px}
+@media (max-width:700px){#dnd-nav #dnd-menu{right:8px;left:8px}}
+</style>
+<div id="dnd-nav">
+  <a class="dnd-logo" href="index.html">OneRoll</a>
+  <button type="button" id="dnd-nav-btn" aria-expanded="false">☰ Menú</button>
+  <div id="dnd-menu" hidden></div>
+</div>
+<div id="dnd-nav-spacer"></div>
+<script>
+(() => {
+  /* Edita aquí los enlaces si cambias nombres de archivo */
+  const LINKS = [
+    ['Inicio', 'index.html'],
+    ['Hojas', 'hojas.html'],
+    ['Iniciativa', 'iniciativa.html'],
+    ['Inventarios', 'inventarios.html'],
+    ['Stats', 'stats.html']
+  ];
+  const actual = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  const menu = document.getElementById('dnd-menu'), btn = document.getElementById('dnd-nav-btn');
+  menu.innerHTML = LINKS.map(([n, h]) => `<a href="${h}" class="${h === actual ? 'actual' : ''}">${n}</a>`).join('');
+  const cerrar = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+<!-- ===== FIN CABECERA COMÚN ===== -->
+<div class="wrap">
+  <h1>Mis hojas de personaje</h1>
+  <div class="panel">
+    <button type="button" class="crear" id="crear">+ Crear hoja de personaje</button>
+    <div class="lista" id="lista"></div>
+  </div>
+</div>
+
+<script>
+(() => {
+  const IDX = 'dnd55_indice';
+  const PREF = 'dnd55_hoja_';
+
+  const leerIds = () => { try { return JSON.parse(localStorage.getItem(IDX) || '[]'); } catch (e) { return []; } };
+  const guardarIds = a => localStorage.setItem(IDX, JSON.stringify(a));
+
+  function info(id) {
+    try {
+      const d = JSON.parse(localStorage.getItem(PREF + id));
+      const nombre = (d && d.f && d.f.nombre) || 'Personaje sin nombre';
+      const clases = (d && d.clases) || [];
+      const nivel = clases.reduce((s, c) => s + (parseInt(c.nivel) || 0), 0);
+      const txt = clases.filter(c => c.clase).map(c => c.clase + ' ' + (c.nivel || '')).join(' / ');
+      return { nombre, sub: nivel || txt ? ('Nivel ' + nivel + (txt ? ' · ' + txt : '')) : 'Hoja vacía' };
+    } catch (e) {
+      return { nombre: 'Personaje sin nombre', sub: 'Hoja vacía' };
+    }
+  }
+
+  function render() {
+    const cont = document.getElementById('lista');
+    cont.innerHTML = '';
+    const ids = leerIds();
+    if (!ids.length) {
+      cont.innerHTML = '<div class="vacio">Aún no hay ninguna hoja. ¡Crea la primera!</div>';
+      return;
+    }
+    ids.forEach(id => {
+      const { nombre, sub } = info(id);
+      const fila = document.createElement('div');
+      fila.className = 'fila';
+
+      const a = document.createElement('a');
+      a.className = 'entrar';
+      a.href = 'hoja.html?id=' + encodeURIComponent(id);
+      const s = document.createElement('strong'); s.textContent = nombre;
+      const m = document.createElement('small'); m.textContent = sub;
+      a.append(s, m);
+
+      const b = document.createElement('button');
+      b.type = 'button'; b.className = 'borrar'; b.textContent = '🗑'; b.title = 'Eliminar hoja';
+      b.addEventListener('click', () => {
+        if (!confirm('¿Eliminar "' + nombre + '"? No se puede deshacer.')) return;
+        localStorage.removeItem(PREF + id);
+        guardarIds(leerIds().filter(x => x !== id));
+        render();
+      });
+
+      fila.append(a, b);
+      cont.appendChild(fila);
+    });
+  }
+
+  document.getElementById('crear').addEventListener('click', () => {
+    const id = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+    const ids = leerIds(); ids.push(id); guardarIds(ids);
+    location.href = 'hoja.html?id=' + encodeURIComponent(id);
+  });
+
+  render();
+})();
+</script>
+</body>
+</html>
