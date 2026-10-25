@@ -1,0 +1,690 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Iniciativa · OneRoll</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+body{background:#f3f6fb;color:#2c3440;padding:24px}
+.hoja{max-width:900px;margin:auto;width:100%}
+h1{text-align:center;margin:6px 0 22px;font-size:26px;font-weight:600;letter-spacing:1px;color:#3a4a5f}
+h3{font-size:15px;font-weight:600;color:#3a4a5f;margin:4px 0 10px}
+[hidden]{display:none!important}
+.panel{background:#fff;border:1px solid #d9e2ec;border-radius:16px;padding:18px;box-shadow:0 3px 10px rgba(0,0,0,.04);margin-bottom:18px}
+input[type=text],input[type=number],select{width:100%;height:34px;padding:0 8px;border-radius:8px;border:1px solid #d6dfeb;font-size:13px;background:#fff;color:#2c3440}
+input:focus,select:focus{outline:none;border-color:#7a9cc6;box-shadow:0 0 0 2px rgba(122,156,198,.15)}
+input[type=color]{width:38px;height:34px;padding:2px;border:1px solid #d6dfeb;border-radius:8px;background:#fff;cursor:pointer}
+label{display:block;font-size:10px;font-weight:700;letter-spacing:.5px;text-transform:uppercase;color:#5b6572;margin-bottom:4px}
+button{height:34px;padding:0 14px;border-radius:8px;border:1px solid #cbd8ea;background:#e4edf7;font-size:12px;font-weight:600;cursor:pointer;white-space:nowrap;transition:.2s;color:#2c3440}
+button:hover:not(:disabled){background:#7a9cc6;color:#fff;border-color:#7a9cc6}
+button:disabled{opacity:.4;cursor:not-allowed}
+button.del{background:#ffe5e5;border-color:#ffb5b5;color:#a30000;width:34px;padding:0}
+button.del:hover{background:#e63946;border-color:#e63946;color:#fff}
+button.grande{height:46px;font-size:15px}
+button.primario{background:#444;border-color:#444;color:#fff}
+button.primario:hover:not(:disabled){background:#222;border-color:#222}
+.leyenda{font-size:12px;color:#5b6572;line-height:1.5}
+
+/* Barra superior */
+.acciones{display:grid;grid-template-columns:1fr 1.4fr;gap:12px;align-items:stretch}
+.sig-wrap{display:grid;grid-template-columns:1fr 1fr 150px;gap:8px;align-items:end}
+.seg-box{display:flex;flex-direction:column}
+.ajustes{display:flex;flex-wrap:wrap;gap:12px 20px;margin-top:14px;align-items:flex-end}
+
+/* Contadores */
+.contadores{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;text-align:center}
+.cont{background:#f8fbff;border:1px solid #d9e6f5;border-radius:12px;padding:10px 6px}
+.cont b{display:block;font-size:26px;line-height:1.1}
+.cont small{font-size:11px;color:#5b6572;font-weight:600;text-transform:uppercase;letter-spacing:.4px}
+.cont.actual b{font-size:17px;padding-top:6px}
+.avisos{margin-top:12px;display:flex;flex-direction:column;gap:6px}
+.aviso{display:flex;align-items:center;justify-content:space-between;gap:8px;background:#fff4dc;border:1px solid #f0cf8a;color:#7a5200;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600}
+.aviso button{height:26px;padding:0 8px}
+
+/* Formulario */
+.form-grid{display:grid;grid-template-columns:2fr 70px 90px 1.4fr;gap:10px;align-items:end}
+.nuevo-tag{display:flex;gap:8px;align-items:end;margin-top:10px}
+.nuevo-tag .campo{flex:1}
+
+/* Lista */
+.fila{background:#f8fbff;border:1px solid #d9e6f5;border-left:8px solid var(--c,#cbd8ea);border-radius:12px;padding:8px 10px;margin-bottom:8px;transition:.2s}
+.fila.activa{background:#eaf2ff;border-color:#7a9cc6;border-left-color:var(--c,#7a9cc6);box-shadow:0 0 0 2px rgba(122,156,198,.35)}
+.fila.fuera{opacity:.5}
+.fila-main{display:grid;grid-template-columns:18px 62px 1fr auto;gap:10px;align-items:center}
+.marca{font-size:14px;color:#3a4a5f;text-align:center}
+.fila .ini{text-align:center;font-weight:700;font-size:16px;padding:0 4px}
+.info{display:flex;flex-wrap:wrap;gap:8px;align-items:center;min-width:0}
+.info .nom{flex:1;min-width:110px;border:1px solid transparent;background:transparent;font-weight:600;font-size:14px}
+.info .nom:hover,.info .nom:focus{border-color:#d6dfeb;background:#fff}
+.tagsel{width:auto;max-width:150px;height:26px;font-size:11px;font-weight:700;border:none;border-radius:6px;padding:0 6px;cursor:pointer}
+.prio{display:flex;align-items:center;gap:6px;font-size:11px;font-weight:600;color:#7a5200}
+.prio select{width:64px;height:26px;font-size:12px}
+.acc{display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end}
+.acc button{height:30px}
+.acc button.del{width:30px}
+.conds{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0 0 28px}
+.cond{display:inline-flex;align-items:center;gap:6px;background:#fff;border:1px solid #d6dfeb;border-radius:999px;padding:3px 4px 3px 10px;font-size:12px;font-weight:600}
+.cond.pronto{background:#fff4dc;border-color:#f0cf8a;color:#7a5200}
+.cond button{height:20px;width:20px;padding:0;border-radius:50%;font-size:10px;background:#f1f3f6}
+.cond-form{display:grid;grid-template-columns:1.6fr 1fr auto auto;gap:8px;margin:8px 0 0 28px;align-items:end}
+.alerta{display:flex;align-items:center;gap:8px;background:#fff4dc;border:1px dashed #e0a52e;color:#7a5200;border-radius:10px;padding:5px 12px;font-size:12px;font-weight:600;margin:-2px 0 8px 28px}
+.alerta.ok{background:#eaf7ef;border-color:#86c7a0;color:#2e8b57}
+.vacio{text-align:center;color:#5b6572;font-size:14px;padding:18px}
+.leyenda-tags{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px}
+.pill{font-size:11px;font-weight:700;border-radius:6px;padding:3px 8px}
+.tag-row{display:grid;grid-template-columns:38px 1fr 34px;gap:8px;align-items:center;margin-bottom:8px}
+details summary{cursor:pointer;font-size:14px;font-weight:600;color:#3a4a5f}
+details[open] summary{margin-bottom:12px}
+
+.sala-fila{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap}
+.sala-fila .campo{width:130px}
+.sala-fila input{text-align:center;font-size:18px;letter-spacing:4px;font-weight:700}
+.sala-cod{display:block;font-size:26px;letter-spacing:5px;line-height:1.1}
+#salaMsg{margin-top:8px;color:#a30000;font-weight:600}
+#salaMsg:empty{display:none}
+
+@media (max-width:700px){
+  body{padding:12px 8px}
+  h1{font-size:19px}
+  .acciones{grid-template-columns:1fr}
+  .sig-wrap{grid-template-columns:1fr 1fr}
+  .seg-box{grid-column:1/-1}
+  .contadores{grid-template-columns:1fr 1fr}
+  .form-grid{grid-template-columns:1fr 1fr}
+  .form-grid .c-nombre,.form-grid .c-tag{grid-column:1/-1}
+  .fila-main{grid-template-columns:16px 54px 1fr}
+  .acc{grid-column:1/-1;justify-content:flex-start}
+  .cond-form{grid-template-columns:1fr 1fr;margin-left:0}
+  .cond-form button{grid-column:auto}
+  .conds,.alerta{margin-left:0}
+  input,select,button{min-height:38px}
+}
+</style>
+</head>
+<body>
+<!-- ===== CABECERA COMÚN (pegar justo después de <body>) ===== -->
+<style>
+#dnd-nav,#dnd-nav *{box-sizing:border-box;margin:0;padding:0;font-family:"Segoe UI",Tahoma,sans-serif}
+#dnd-nav{position:fixed;top:0;left:0;right:0;height:48px;z-index:1000;background:#3a4a5f;color:#fff;display:flex;align-items:center;justify-content:space-between;padding:0 16px;box-shadow:0 2px 8px rgba(0,0,0,.15)}
+#dnd-nav a.dnd-logo{color:#fff;text-decoration:none;font-weight:600;font-size:16px;letter-spacing:1px}
+#dnd-nav #dnd-nav-btn{height:34px;padding:0 14px;border-radius:8px;border:1px solid rgba(255,255,255,.35);background:transparent;color:#fff;font-size:13px;font-weight:600;cursor:pointer;white-space:nowrap}
+#dnd-nav #dnd-nav-btn:hover{background:rgba(255,255,255,.15);color:#fff;border-color:rgba(255,255,255,.6)}
+#dnd-nav #dnd-menu{position:absolute;top:52px;right:16px;min-width:200px;background:#fff;border:1px solid #d9e2ec;border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.18);padding:6px;display:flex;flex-direction:column}
+#dnd-nav #dnd-menu[hidden]{display:none}
+#dnd-nav #dnd-menu a{display:block;padding:10px 12px;border-radius:8px;color:#2c3440;text-decoration:none;font-size:14px;font-weight:600}
+#dnd-nav #dnd-menu a:hover{background:#e4edf7}
+#dnd-nav #dnd-menu a.actual{background:#444;color:#fff}
+#dnd-nav-spacer{height:48px}
+@media (max-width:700px){#dnd-nav #dnd-menu{right:8px;left:8px}}
+</style>
+<div id="dnd-nav">
+  <a class="dnd-logo" href="index.html">OneRoll</a>
+  <button type="button" id="dnd-nav-btn" aria-expanded="false">☰ Menú</button>
+  <div id="dnd-menu" hidden></div>
+</div>
+<div id="dnd-nav-spacer"></div>
+<script>
+(() => {
+  /* Edita aquí los enlaces si cambias nombres de archivo */
+  const LINKS = [
+    ['Inicio', 'index.html'],
+    ['Hojas', 'hojas.html'],
+    ['Iniciativa', 'iniciativa.html'],
+    ['Inventarios', 'inventarios.html'],
+    ['Stats', 'stats.html']
+  ];
+  const actual = decodeURIComponent(location.pathname.split('/').pop() || 'index.html');
+  const menu = document.getElementById('dnd-menu'), btn = document.getElementById('dnd-nav-btn');
+  menu.innerHTML = LINKS.map(([n, h]) => `<a href="${h}" class="${h === actual ? 'actual' : ''}">${n}</a>`).join('');
+  const cerrar = () => { menu.hidden = true; btn.setAttribute('aria-expanded', 'false'); };
+  btn.addEventListener('click', e => { e.stopPropagation(); menu.hidden = !menu.hidden; btn.setAttribute('aria-expanded', String(!menu.hidden)); });
+  document.addEventListener('click', e => { if (!menu.contains(e.target)) cerrar(); });
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') cerrar(); });
+})();
+</script>
+<!-- ===== FIN CABECERA COMÚN ===== -->
+<div class="hoja">
+  <h1>Iniciativa</h1>
+
+  <section class="panel" id="panelSala">
+    <div class="sala-fila" id="salaFuera">
+      <div class="campo"><label>Código de sala</label><input type="text" id="salaCodigo" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"></div>
+      <button type="button" id="btnEntrar">Entrar</button>
+      <button type="button" class="primario" id="btnCrearSala">Crear sala</button>
+      <span class="leyenda">Todos los que entren con el mismo código ven y editan lo mismo.</span>
+    </div>
+    <div class="sala-fila" id="salaDentro" hidden>
+      <div><label>Sala</label><b class="sala-cod" id="salaCod"></b></div>
+      <span class="leyenda" id="salaEstado" style="padding-bottom:8px"></span>
+      <button type="button" id="btnSalir">Salir de la sala</button>
+    </div>
+    <div class="leyenda" id="salaMsg"></div>
+  </section>
+
+  <section class="panel">
+    <div class="acciones">
+      <button type="button" class="grande" id="btnAdd">+ Añadir combatiente</button>
+      <div class="sig-wrap">
+        <button type="button" class="grande primario" id="btnSig">▶ Siguiente turno</button>
+        <button type="button" class="grande" id="btnRonda">⏭ Siguiente ronda</button>
+        <div class="seg-box"><label>Segundos por ronda</label><input type="number" id="segTurno" min="1" value="6"></div>
+      </div>
+    </div>
+    <div class="ajustes">
+      <button type="button" id="btnReinicio">Reiniciar contadores</button>
+      <button type="button" class="del" id="btnVaciar" title="Quitar a todos los combatientes" style="width:auto;padding:0 12px">Vaciar lista</button>
+    </div>
+  </section>
+
+  <section class="panel">
+    <div class="contadores">
+      <div class="cont"><b id="cRonda">0</b><small>Ronda</small></div>
+      <div class="cont"><b id="cTurno">0</b><small>Turno</small></div>
+      <div class="cont"><b id="cSeg">0</b><small>Segundos</small></div>
+      <div class="cont actual"><b id="cActual">—</b><small>Le toca a</small></div>
+    </div>
+    <div class="avisos" id="avisos"></div>
+  </section>
+
+  <section class="panel" id="panelAdd" hidden>
+    <h3>Nuevo combatiente</h3>
+    <div class="form-grid">
+      <div class="c-nombre"><label>Nombre</label><input type="text" id="fNombre" placeholder="Jugador, Monstruo…"></div>
+      <div><label>Cantidad</label><input type="number" id="fCant" min="1" max="30" value="1"></div>
+      <div><label>Iniciativa</label><input type="number" id="fIni" placeholder="0"></div>
+      <div class="c-tag"><label>Etiqueta / equipo</label><select id="fTag"></select></div>
+    </div>
+    <div class="nuevo-tag" id="boxNuevoTag" hidden>
+      <div class="campo"><label>Nombre de la etiqueta</label><input type="text" id="fTagNombre" placeholder="Jugadores, Enemigos…"></div>
+      <div><label>Color</label><input type="color" id="fTagColor" value="#3a86ff"></div>
+    </div>
+    <div style="display:flex;gap:8px;margin-top:14px;flex-wrap:wrap">
+      <button type="button" class="primario" id="btnCrear">Añadir a la lista</button>
+      <button type="button" id="btnCerrar">Cerrar</button>
+      <span class="leyenda" style="align-self:center">Con cantidad mayor que 1 se numeran solos (Goblin 1, Goblin 2…).</span>
+    </div>
+  </section>
+
+  <section class="panel">
+    <h3>Orden de iniciativa</h3>
+    <div class="leyenda-tags" id="leyendaTags"></div>
+    <div id="lista"></div>
+  </section>
+
+  <section class="panel">
+    <details id="detTags">
+      <summary>Etiquetas y colores</summary>
+      <div id="tagsMgr"></div>
+      <div class="leyenda">Borrar una etiqueta deja sin etiqueta a quienes la tenían.</div>
+    </details>
+  </section>
+</div>
+
+<script>
+(() => {
+  const KEY = 'dnd55_iniciativa';
+  const $ = s => document.querySelector(s);
+  const esc = s => String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/"/g, '&quot;');
+  const PALETA = ['#e63946', '#3a86ff', '#2e8b57', '#e8a33d', '#8a6fc6', '#16a5a5', '#d6336c', '#6b7280'];
+
+  /* ===== Estado ===== */
+  const defState = () => ({
+    comb: [], tags: [], sig: 1,
+    iniciado: false, ronda: 0, turno: 0, seg: 0,
+    segTurno: 6, activeId: null,
+    tieOk: {}, avisos: []
+  });
+  let state = defState();
+  try { const raw = localStorage.getItem(KEY); if (raw) state = Object.assign(defState(), JSON.parse(raw)); } catch (e) {}
+  const save = () => { try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {} salaPush(); };
+  const nid = () => state.sig++;
+
+  let condAbierto = null; // id del combatiente con el formulario de condición abierto
+  let scrollActivo = false;
+
+  /* ===== Utilidades ===== */
+  const ordenados = () => [...state.comb].sort((a, b) => (b.ini - a.ini) || (a.prio - b.prio) || (a.id - b.id));
+  const tagDe = c => state.tags.find(t => t.id === c.tag) || null;
+  function textoSobre(hex) {
+    const h = (hex || '#888').replace('#', '');
+    const r = parseInt(h.substr(0, 2), 16), g = parseInt(h.substr(2, 2), 16), b = parseInt(h.substr(4, 2), 16);
+    return (0.299 * r + 0.587 * g + 0.114 * b) > 160 ? '#222' : '#fff';
+  }
+  const fmtSeg = s => s >= 60 ? s + ' s (' + Math.floor(s / 60) + ':' + String(s % 60).padStart(2, '0') + ')' : s + ' s';
+
+  /* ===== Turnos ===== */
+  function siguienteIndice(ord, i) {
+    const n = ord.length;
+    for (let step = 1; step <= n; step++) {
+      const idx = (((i + step) % n) + n) % n;
+      if (!ord[idx].fuera) return { idx, wrap: (i + step) >= n };
+    }
+    return null;
+  }
+
+  function aplicarDescuento(segs) {
+    state.comb.forEach(c => {
+      const quedan = [];
+      c.conds.forEach(cd => {
+        if (cd.rest === null) { quedan.push(cd); return; }
+        cd.rest -= segs;
+        if (cd.rest <= 0) state.avisos.push('«' + cd.nombre + '» de ' + c.nombre + ' ha terminado');
+        else quedan.push(cd);
+      });
+      c.conds = quedan;
+    });
+  }
+
+  function siguiente() {
+    const ord = ordenados();
+    state.avisos = [];
+    if (!state.iniciado) {
+      const s = siguienteIndice(ord, -1);
+      if (!s) return;
+      state.iniciado = true; state.ronda = 1; state.turno = 1; state.seg = 0;
+      state.activeId = ord[s.idx].id;
+    } else {
+      const i = ord.findIndex(c => c.id === state.activeId);
+      const s = siguienteIndice(ord, i);
+      if (!s) return;
+      if (s.wrap) { state.seg += state.segTurno; aplicarDescuento(state.segTurno); }
+      state.turno++;
+      if (s.wrap) state.ronda++;
+      state.activeId = ord[s.idx].id;
+    }
+    scrollActivo = true;
+    save(); render();
+  }
+
+  function siguienteRonda() {
+    const ord = ordenados();
+    const primero = siguienteIndice(ord, -1);
+    if (!primero) return;
+    state.avisos = [];
+    if (!state.iniciado) {
+      state.iniciado = true; state.ronda = 1; state.turno = 1; state.seg = 0;
+    } else {
+      state.seg += state.segTurno; aplicarDescuento(state.segTurno);
+      state.turno++; state.ronda++;
+    }
+    state.activeId = ord[primero.idx].id;
+    scrollActivo = true;
+    save(); render();
+  }
+
+  /* ===== Prioridad en empates ===== */
+  function fijarPrioridad(id, pos) {
+    const c = state.comb.find(x => x.id === id); if (!c) return;
+    const grupo = ordenados().filter(x => x.ini === c.ini && x.id !== id);
+    grupo.splice(Math.max(0, Math.min(grupo.length, pos)), 0, c);
+    grupo.forEach((x, i) => x.prio = i);
+    state.tieOk[c.ini] = true;
+  }
+
+  /* ===== Render ===== */
+  function renderContadores() {
+    $('#cRonda').textContent = state.ronda;
+    $('#cTurno').textContent = state.turno;
+    $('#cSeg').textContent = state.seg;
+    const a = state.comb.find(c => c.id === state.activeId);
+    $('#cActual').textContent = a ? a.nombre : '—';
+    $('#avisos').innerHTML = state.avisos.map((t, i) =>
+      `<div class="aviso"><span>⏱ ${esc(t)}</span><button type="button" data-avis="${i}">✖</button></div>`).join('');
+    $('#segTurno').value = state.segTurno;
+  }
+
+  function renderTagSelect() {
+    const sel = $('#fTag'), cur = sel.value;
+    sel.innerHTML = '<option value="">Sin etiqueta</option>' +
+      state.tags.map(t => `<option value="${t.id}">${esc(t.nombre)}</option>`).join('') +
+      '<option value="__nuevo">+ Nueva etiqueta…</option>';
+    if ([...sel.options].some(o => o.value === cur)) sel.value = cur;
+    $('#boxNuevoTag').hidden = sel.value !== '__nuevo';
+  }
+
+  function renderLista() {
+    const ord = ordenados(), cont = $('#lista');
+    $('#leyendaTags').innerHTML = state.tags.map(t =>
+      `<span class="pill" style="background:${t.color};color:${textoSobre(t.color)}">${esc(t.nombre)}</span>`).join('');
+    if (!ord.length) { cont.innerHTML = '<div class="vacio">Aún no hay combatientes. Pulsa «Añadir combatiente».</div>'; return; }
+
+    let html = '';
+    ord.forEach((c, i) => {
+      const t = tagDe(c), color = t ? t.color : '#cbd8ea';
+      const grupo = ord.filter(x => x.ini === c.ini);
+      const pos = grupo.indexOf(c);
+      const act = state.iniciado && c.id === state.activeId;
+      const tagOpts = '<option value="">Sin etiqueta</option>' + state.tags.map(tt =>
+        `<option value="${tt.id}" ${c.tag === tt.id ? 'selected' : ''}>${esc(tt.nombre)}</option>`).join('');
+      const tagStyle = t ? `background:${t.color};color:${textoSobre(t.color)}` : 'background:#e4edf7;color:#5b6572';
+      const prio = grupo.length > 1 ? `<label class="prio">Prioridad
+        <select data-prio="${c.id}">${grupo.map((_, k) => `<option value="${k}" ${k === pos ? 'selected' : ''}>${k + 1}º</option>`).join('')}</select></label>` : '';
+      const conds = c.conds.map(cd => {
+        const pronto = cd.rest !== null && cd.rest <= state.segTurno;
+        return `<span class="cond ${pronto ? 'pronto' : ''}">${esc(cd.nombre)}${cd.rest !== null ? ' · ' + fmtSeg(cd.rest) : ' · sin límite'}
+          <button type="button" data-delcond="${c.id}:${cd.id}" title="Quitar condición">✖</button></span>`;
+      }).join('');
+      const form = condAbierto === c.id ? `
+        <div class="cond-form">
+          <div><label>Condición</label><input type="text" data-cn="${c.id}" placeholder="Aturdido, Bendición…"></div>
+          <div><label>Segundos</label><input type="number" min="1" data-cs="${c.id}" placeholder="vacío = sin límite"></div>
+          <button type="button" class="primario" data-okcond="${c.id}">Añadir</button>
+          <button type="button" data-nocond="${c.id}">Cancelar</button>
+        </div>` : '';
+
+      html += `
+        <div class="fila ${act ? 'activa' : ''} ${c.fuera ? 'fuera' : ''}" data-fila="${c.id}" style="--c:${color}">
+          <div class="fila-main">
+            <span class="marca">${act ? '▶' : ''}</span>
+            <input type="number" class="ini" data-ini="${c.id}" value="${c.ini}" title="Iniciativa">
+            <div class="info">
+              <input type="text" class="nom" data-nom="${c.id}" value="${esc(c.nombre)}">
+              <select class="tagsel" data-tagsel="${c.id}" style="${tagStyle}">${tagOpts}</select>
+              ${prio}
+            </div>
+            <div class="acc">
+              <button type="button" data-addcond="${c.id}">+ Condición</button>
+              <button type="button" data-fuera="${c.id}">${c.fuera ? 'Reactivar' : 'Derrotado'}</button>
+              <button type="button" class="del" data-del="${c.id}" title="Quitar de la lista">✖</button>
+            </div>
+          </div>
+          ${form}
+          ${conds ? `<div class="conds">${conds}</div>` : ''}
+        </div>`;
+
+      const sig = ord[i + 1];
+      if (sig && sig.ini === c.ini) {
+        const ok = !!state.tieOk[c.ini];
+        html += `<div class="alerta ${ok ? 'ok' : ''}">${ok ? '✓' : '⚠'} Empate a ${c.ini}: ${ok ? 'prioridad decidida' : 'decide quién va antes con el selector «Prioridad»'}</div>`;
+      }
+    });
+    cont.innerHTML = html;
+  }
+
+  function renderTags() {
+    $('#tagsMgr').innerHTML = state.tags.length ? state.tags.map(t => `
+      <div class="tag-row"><input type="color" data-tcolor="${t.id}" value="${t.color}">
+        <input type="text" data-tnom="${t.id}" value="${esc(t.nombre)}">
+        <button type="button" class="del" data-tdel="${t.id}">✖</button></div>`).join('')
+      : '<div class="leyenda" style="margin-bottom:8px">Todavía no hay etiquetas. Se crean al añadir un combatiente.</div>';
+  }
+
+  function render() {
+    renderContadores(); renderTagSelect(); renderLista();
+    $('#btnSig').disabled = $('#btnRonda').disabled = state.comb.every(c => c.fuera);
+    if (scrollActivo) {
+      scrollActivo = false;
+      const el = document.querySelector('.fila.activa');
+      if (el && el.scrollIntoView) el.scrollIntoView({ block: 'nearest', behavior: 'smooth' });
+    }
+  }
+  const renderTodo = () => { render(); renderTags(); };
+
+  /* ===== Añadir combatiente ===== */
+  function crear() {
+    const ini = parseInt($('#fIni').value);
+    if (isNaN(ini)) { $('#fIni').focus(); return; }
+    let tagId = $('#fTag').value || null;
+    if (tagId === '__nuevo') {
+      const nombre = $('#fTagNombre').value.trim();
+      if (!nombre) { $('#fTagNombre').focus(); return; }
+      const t = { id: nid(), nombre, color: $('#fTagColor').value };
+      state.tags.push(t); tagId = t.id;
+      $('#fTagNombre').value = '';
+      $('#fTagColor').value = PALETA[state.tags.length % PALETA.length];
+    } else if (tagId) tagId = parseInt(tagId);
+    const cant = Math.max(1, Math.min(30, parseInt($('#fCant').value) || 1));
+    const base = $('#fNombre').value.trim() || 'Combatiente';
+    for (let n = 1; n <= cant; n++) {
+      const id = nid();
+      state.comb.push({ id, nombre: cant > 1 ? base + ' ' + n : base, ini, prio: id, tag: tagId, fuera: false, conds: [] });
+    }
+    delete state.tieOk[ini];
+    $('#fNombre').value = ''; $('#fIni').value = ''; $('#fCant').value = 1;
+    renderTodo();
+    // tras crear una etiqueta nueva se queda seleccionada
+    renderTagSelect(); if (tagId) $('#fTag').value = String(tagId); $('#boxNuevoTag').hidden = true;
+    save(); $('#fNombre').focus();
+  }
+
+  function quitar(id) {
+    const ord = ordenados(), i = ord.findIndex(c => c.id === id);
+    const c = ord[i]; if (!c) return;
+    delete state.tieOk[c.ini];
+    state.comb = state.comb.filter(x => x.id !== id);
+    if (state.activeId === id) {
+      const rest = ordenados();
+      let cand = null;
+      for (let k = 0; k < rest.length; k++) {
+        const x = rest[(i + k) % rest.length];
+        if (!x.fuera) { cand = x; break; }
+      }
+      state.activeId = cand ? cand.id : null;
+    }
+    if (!state.comb.length) { state.iniciado = false; state.activeId = null; }
+  }
+
+  /* ===== Eventos ===== */
+  $('#btnAdd').addEventListener('click', () => {
+    const p = $('#panelAdd'); p.hidden = !p.hidden;
+    if (!p.hidden) { renderTagSelect(); $('#fNombre').focus(); p.scrollIntoView({ block: 'nearest', behavior: 'smooth' }); }
+  });
+  $('#btnCerrar').addEventListener('click', () => { $('#panelAdd').hidden = true; });
+  $('#btnCrear').addEventListener('click', crear);
+  ['#fNombre', '#fIni', '#fCant', '#fTagNombre'].forEach(s => $(s).addEventListener('keydown', e => { if (e.key === 'Enter') crear(); }));
+  $('#fTag').addEventListener('change', () => {
+    const nuevo = $('#fTag').value === '__nuevo';
+    $('#boxNuevoTag').hidden = !nuevo;
+    if (nuevo) { $('#fTagColor').value = PALETA[state.tags.length % PALETA.length]; $('#fTagNombre').focus(); }
+  });
+
+  $('#btnSig').addEventListener('click', siguiente);
+  $('#btnRonda').addEventListener('click', siguienteRonda);
+  $('#segTurno').addEventListener('change', e => { state.segTurno = Math.max(1, parseInt(e.target.value) || 6); save(); renderTodo(); });
+
+  $('#btnReinicio').addEventListener('click', () => {
+    if (!confirm('¿Reiniciar ronda, turno y segundos? Se conservan los combatientes y sus condiciones.')) return;
+    state.iniciado = false; state.ronda = 0; state.turno = 0; state.seg = 0; state.activeId = null; state.avisos = [];
+    save(); renderTodo();
+  });
+  $('#btnVaciar').addEventListener('click', () => {
+    if (!state.comb.length || !confirm('¿Quitar a todos los combatientes de la lista?')) return;
+    state.comb = []; state.tieOk = {}; state.iniciado = false; state.ronda = 0; state.turno = 0; state.seg = 0; state.activeId = null; state.avisos = [];
+    save(); renderTodo();
+  });
+
+  $('#avisos').addEventListener('click', e => {
+    const b = e.target.closest('[data-avis]'); if (!b) return;
+    state.avisos.splice(parseInt(b.dataset.avis), 1); save(); renderContadores();
+  });
+
+  function addCond(id) {
+    const n = document.querySelector(`[data-cn="${id}"]`), s = document.querySelector(`[data-cs="${id}"]`);
+    const nombre = n.value.trim();
+    if (!nombre) { n.focus(); return; }
+    const c = state.comb.find(x => x.id === id); if (!c) return;
+    const secs = parseInt(s.value);
+    c.conds.push({ id: nid(), nombre, rest: isNaN(secs) || secs <= 0 ? null : secs });
+    condAbierto = null; save(); render();
+  }
+
+  $('#lista').addEventListener('click', e => {
+    const t = e.target.closest('button'); if (!t) return;
+    const d = t.dataset;
+    if (d.addcond) { condAbierto = condAbierto === parseInt(d.addcond) ? null : parseInt(d.addcond); render(); const i = document.querySelector(`[data-cn="${condAbierto}"]`); if (i) i.focus(); }
+    else if (d.nocond) { condAbierto = null; render(); }
+    else if (d.okcond) addCond(parseInt(d.okcond));
+    else if (d.delcond) {
+      const [cid, kid] = d.delcond.split(':').map(Number);
+      const c = state.comb.find(x => x.id === cid); if (c) c.conds = c.conds.filter(k => k.id !== kid);
+      save(); render();
+    }
+    else if (d.fuera) {
+      const c = state.comb.find(x => x.id === parseInt(d.fuera)); if (!c) return;
+      c.fuera = !c.fuera; save(); render();
+    }
+    else if (d.del) {
+      const c = state.comb.find(x => x.id === parseInt(d.del));
+      if (!c || !confirm('¿Quitar a «' + c.nombre + '» de la lista?')) return;
+      quitar(c.id); save(); renderTodo();
+    }
+  });
+  $('#lista').addEventListener('keydown', e => {
+    if (e.key !== 'Enter') return;
+    const i = e.target.dataset;
+    const id = i.cn || i.cs; if (id) addCond(parseInt(id));
+  });
+  $('#lista').addEventListener('change', e => {
+    const t = e.target, d = t.dataset;
+    if (d.ini) {
+      const c = state.comb.find(x => x.id === parseInt(d.ini)); if (!c) return;
+      const v = parseInt(t.value);
+      if (isNaN(v)) { t.value = c.ini; return; }
+      delete state.tieOk[c.ini]; delete state.tieOk[v];
+      c.ini = v; c.prio = c.id; save(); render();
+    } else if (d.nom) {
+      const c = state.comb.find(x => x.id === parseInt(d.nom)); if (!c) return;
+      c.nombre = t.value.trim() || c.nombre; save(); renderContadores();
+    } else if (d.tagsel) {
+      const c = state.comb.find(x => x.id === parseInt(d.tagsel)); if (!c) return;
+      c.tag = t.value ? parseInt(t.value) : null; save(); render();
+    } else if (d.prio) {
+      fijarPrioridad(parseInt(d.prio), parseInt(t.value)); save(); render();
+    }
+  });
+
+  $('#tagsMgr').addEventListener('input', e => {
+    const d = e.target.dataset;
+    if (d.tcolor || d.tnom) {
+      const t = state.tags.find(x => x.id === parseInt(d.tcolor || d.tnom)); if (!t) return;
+      if (d.tcolor) t.color = e.target.value; else t.nombre = e.target.value;
+      save(); renderLista(); renderTagSelect();
+    }
+  });
+  $('#tagsMgr').addEventListener('click', e => {
+    const b = e.target.closest('[data-tdel]'); if (!b) return;
+    const id = parseInt(b.dataset.tdel);
+    state.tags = state.tags.filter(t => t.id !== id);
+    state.comb.forEach(c => { if (c.tag === id) c.tag = null; });
+    save(); renderTodo();
+  });
+
+
+  /* ===== Sala compartida (Firebase Realtime Database) ===== */
+  /* Pega aquí la URL de tu base de datos, p. ej. 'https://mi-proyecto-default-rtdb.europe-west1.firebasedatabase.app' */
+  const FIREBASE_URL = 'https://oneroll-56246-default-rtdb.firebaseio.com/';
+  const SHARED = ['comb', 'tags', 'sig', 'iniciado', 'ronda', 'turno', 'seg', 'segTurno', 'activeId', 'tieOk', 'avisos'];
+  const SALA_KEY = 'dnd55_sala';
+  let sala = null, lastV = null, seq = 0, pushT = null, pushing = false, dirty = false, ignoreUntil = 0, pollT = null, online = true;
+
+  const urlSala = c => FIREBASE_URL.replace(/\/+$/, '') + '/salas/' + c + '.json';
+  const snapshot = () => { const o = {}; SHARED.forEach(k => o[k] = state[k]); return JSON.stringify(o); };
+  const msgSala = t => { $('#salaMsg').textContent = t || ''; };
+  const estadoSala = () => { $('#salaEstado').textContent = online ? '🟢 Sincronizado' : '🔴 Sin conexión, reintentando…'; };
+
+  function mostrarSala() {
+    $('#salaFuera').hidden = !!sala; $('#salaDentro').hidden = !sala;
+    $('#salaCod').textContent = sala || ''; estadoSala();
+  }
+
+  function salaPush() {
+    if (!sala) return;
+    seq++; pushing = true; clearTimeout(pushT);
+    pushT = setTimeout(async () => {
+      const v = Date.now() + '-' + Math.random().toString(36).slice(2, 7);
+      lastV = v;
+      try {
+        const r = await fetch(urlSala(sala), { method: 'PUT', body: JSON.stringify({ v, d: snapshot() }) });
+        if (!r.ok) throw 0;
+        online = true; dirty = false;
+      } catch (e) { online = false; dirty = true; }
+      pushing = false; ignoreUntil = Date.now() + 1200; estadoSala();
+    }, 150);
+  }
+
+  function aplicarRemoto(r) {
+    const d = JSON.parse(r.d);
+    SHARED.forEach(k => { if (d[k] !== undefined) state[k] = d[k]; });
+    lastV = r.v;
+    try { localStorage.setItem(KEY, JSON.stringify(state)); } catch (e) {}
+    renderTodo();
+  }
+
+  async function poll() {
+    if (!sala || pushing || Date.now() < ignoreUntil) return;
+    const mine = seq;
+    try {
+      const r = await fetch(urlSala(sala) + '?t=' + Date.now());
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      online = true;
+      if (mine !== seq || pushing) return;
+      if (j === null) { salirSala(); msgSala('La sala ya no existe.'); return; }
+      if (dirty) { salaPush(); return; }
+      if (j.v !== lastV) {
+        const a = document.activeElement;
+        if (a && /^(INPUT|SELECT|TEXTAREA)$/.test(a.tagName)) return; // no pisar lo que se está escribiendo
+        aplicarRemoto(j);
+      }
+    } catch (e) { online = false; }
+    estadoSala();
+  }
+
+  function arrancarSala(code) {
+    sala = code; lastV = null; dirty = false;
+    try { localStorage.setItem(SALA_KEY, code); } catch (e) {}
+    clearInterval(pollT); pollT = setInterval(poll, 1500);
+    mostrarSala();
+  }
+  function salirSala() {
+    sala = null; clearInterval(pollT); clearTimeout(pushT); pushing = false;
+    try { localStorage.removeItem(SALA_KEY); } catch (e) {}
+    mostrarSala();
+  }
+
+  const sinConfig = () => { if (FIREBASE_URL) return false; msgSala('Falta pegar la URL de Firebase en FIREBASE_URL (al final del script).'); return true; };
+
+  async function entrarSala() {
+    if (sinConfig()) return;
+    const code = $('#salaCodigo').value.trim();
+    if (!/^\d{4}$/.test(code)) { msgSala('El código tiene 4 cifras.'); return; }
+    try {
+      const r = await fetch(urlSala(code) + '?t=' + Date.now());
+      if (!r.ok) throw 0;
+      const j = await r.json();
+      if (j === null) { msgSala('No existe ninguna sala con ese código.'); return; }
+      if (state.comb.length && !confirm('Al entrar se sustituirán tus datos actuales por los de la sala. ¿Continuar?')) return;
+      msgSala(''); arrancarSala(code); aplicarRemoto(j);
+    } catch (e) { msgSala('No se pudo conectar. Revisa FIREBASE_URL y las reglas de la base de datos.'); }
+  }
+
+  async function crearSala() {
+    if (sinConfig()) return;
+    try {
+      let code = null;
+      for (let i = 0; i < 15 && !code; i++) {
+        const c = String(Math.floor(Math.random() * 10000)).padStart(4, '0');
+        const r = await fetch(urlSala(c) + '?t=' + Date.now());
+        if (!r.ok) throw 0;
+        if ((await r.json()) === null) code = c;
+      }
+      if (!code) { msgSala('No he encontrado un código libre, inténtalo otra vez.'); return; }
+      msgSala(''); arrancarSala(code); salaPush();
+    } catch (e) { msgSala('No se pudo conectar. Revisa FIREBASE_URL y las reglas de la base de datos.'); }
+  }
+
+  $('#btnEntrar').addEventListener('click', entrarSala);
+  $('#btnCrearSala').addEventListener('click', crearSala);
+  $('#btnSalir').addEventListener('click', () => { if (confirm('¿Salir de la sala? Conservarás una copia local de los datos.')) salirSala(); });
+  $('#salaCodigo').addEventListener('input', e => { e.target.value = e.target.value.replace(/\D/g, '').slice(0, 4); });
+  $('#salaCodigo').addEventListener('keydown', e => { if (e.key === 'Enter') entrarSala(); });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+
+  try { const g = localStorage.getItem(SALA_KEY); if (g && FIREBASE_URL) { arrancarSala(g); poll(); } } catch (e) {}
+
+  renderTodo();
+})();
+</script>
+</body>
+</html>
